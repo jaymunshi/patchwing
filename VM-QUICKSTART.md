@@ -14,9 +14,12 @@ closed**, so you can see it work in a few minutes without installing or configur
 
 ## Getting the OVA
 
-The demo appliance (`PatchWing-demo.ova`, ~6.3 GB) is **not in this Git repository** — it is too
-large for GitHub. It is **available on request**: open an issue on the repo asking for the demo
-VM and you'll get a download link.
+The demo appliance (~6.3 GB) is **not in this Git repository** — it is too large for GitHub.
+**Download it from Google Drive:**
+
+> ⬇ **[PatchWing demo VM — `Patchwing-demo.ova` (6.3 GB)](https://drive.google.com/drive/folders/1WqRAr6ODfFPZUKd4SchAwWLEO854pQiE?usp=sharing)**
+
+Open the folder and download `Patchwing-demo.ova`.
 
 You do **not** need the VM to use PatchWing. The code runs from a plain `git clone` against your
 own model (see the [README](README.md)), and the shipped
@@ -36,7 +39,7 @@ CVEs with zero setup.
 ## Import
 
 1. VirtualBox → **File → Import Appliance…**
-2. Select `PatchWing-demo.ova`, accept the defaults, **Import**.
+2. Select `Patchwing-demo.ova`, accept the defaults, **Import**.
 3. Start the **patchwing** VM. PatchWing's web service auto-starts on boot.
 
 ## First boot — change the defaults
