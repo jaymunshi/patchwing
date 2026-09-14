@@ -12,6 +12,20 @@ closed**, so you can see it work in a few minutes without installing or configur
 
 ---
 
+## Getting the OVA
+
+The demo appliance (`PatchWing-demo.ova`, ~6.3 GB) is **not in this Git repository** — it is too
+large for GitHub. It is **available on request**: open an issue on the repo asking for the demo
+VM and you'll get a download link.
+
+You do **not** need the VM to use PatchWing. The code runs from a plain `git clone` against your
+own model (see the [README](README.md)), and the shipped
+[example evidence bundle](examples/decompress-CVE-2026-10732-evidence-bundle/) is fully
+inspectable and re-runnable offline without it. The VM just lets you watch three already-closed
+CVEs with zero setup.
+
+---
+
 ## Requirements
 
 - **VirtualBox 7.x** (Oracle VM VirtualBox).
