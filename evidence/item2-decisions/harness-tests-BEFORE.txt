@@ -1,0 +1,182 @@
+FEFFFFFFFFF.FFFFF
+======================================================================
+ERROR: test_a_the_traceback_is_still_attached (test_harness_failure.HarnessFailureTest.test_a_the_traceback_is_still_attached)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "C:\Users\jaymu\claude-workspace\patchwing-merged\tests\test_harness_failure.py", line 79, in test_a_the_traceback_is_still_attached
+    self.assertIn("KeyError", art["content"],
+                              ~~~^^^^^^^^^^^
+TypeError: 'NoneType' object is not subscriptable
+
+======================================================================
+FAIL: test_a_raise_records_a_declared_outcome (test_harness_failure.HarnessFailureTest.test_a_raise_records_a_declared_outcome)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "C:\Users\jaymu\claude-workspace\patchwing-merged\tests\test_harness_failure.py", line 71, in test_a_raise_records_a_declared_outcome
+    meta = self._meta(f.id)
+           ^^^^^^^^^^^^^^^^
+  File "C:\Users\jaymu\claude-workspace\patchwing-merged\tests\test_harness_failure.py", line 62, in _meta
+    self.assertIsNotNone(art, "no harness_failure artifact was recorded — the "
+AssertionError: unexpectedly None : no harness_failure artifact was recorded — the outcome is unrecoverable from the DB
+
+======================================================================
+FAIL: test_b_a_retryable_class_still_only_ever_gets_one (test_harness_failure.HarnessFailureTest.test_b_a_retryable_class_still_only_ever_gets_one)
+Bounded at ONE, not at max_attempts. The runner's default is 3.
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "C:\Users\jaymu\claude-workspace\patchwing-merged\tests\test_harness_failure.py", line 137, in test_b_a_retryable_class_still_only_ever_gets_one
+    self.assertEqual(STATE_FAILED, got.state)
+AssertionError: 'failed' != 'pending'
+- failed
++ pending
+
+
+======================================================================
+FAIL: test_b_never_retry_beats_retryable_superclass (test_harness_failure.HarnessFailureTest.test_b_never_retry_beats_retryable_superclass)
+AuthError subclasses ModelError. A 401 does not become a 200 twice.
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "C:\Users\jaymu\claude-workspace\patchwing-merged\tests\test_harness_failure.py", line 125, in test_b_never_retry_beats_retryable_superclass
+    self.assertEqual(STATE_FAILED, self.store.get(f.id).state)
+AssertionError: 'failed' != 'pending'
+- failed
++ pending
+
+
+======================================================================
+FAIL: test_b_non_retryable_class_terminates_on_the_first_raise (test_harness_failure.HarnessFailureTest.test_b_non_retryable_class_terminates_on_the_first_raise) (exc='KeyError')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "C:\Users\jaymu\claude-workspace\patchwing-merged\tests\test_harness_failure.py", line 92, in test_b_non_retryable_class_terminates_on_the_first_raise
+    self.assertEqual(STATE_FAILED, got.state)
+AssertionError: 'failed' != 'pending'
+- failed
++ pending
+
+
+======================================================================
+FAIL: test_b_non_retryable_class_terminates_on_the_first_raise (test_harness_failure.HarnessFailureTest.test_b_non_retryable_class_terminates_on_the_first_raise) (exc='AttributeError')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "C:\Users\jaymu\claude-workspace\patchwing-merged\tests\test_harness_failure.py", line 92, in test_b_non_retryable_class_terminates_on_the_first_raise
+    self.assertEqual(STATE_FAILED, got.state)
+AssertionError: 'failed' != 'pending'
+- failed
++ pending
+
+
+======================================================================
+FAIL: test_b_non_retryable_class_terminates_on_the_first_raise (test_harness_failure.HarnessFailureTest.test_b_non_retryable_class_terminates_on_the_first_raise) (exc='TypeError')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "C:\Users\jaymu\claude-workspace\patchwing-merged\tests\test_harness_failure.py", line 92, in test_b_non_retryable_class_terminates_on_the_first_raise
+    self.assertEqual(STATE_FAILED, got.state)
+AssertionError: 'failed' != 'pending'
+- failed
++ pending
+
+
+======================================================================
+FAIL: test_b_non_retryable_class_terminates_on_the_first_raise (test_harness_failure.HarnessFailureTest.test_b_non_retryable_class_terminates_on_the_first_raise) (exc='MemoryError')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "C:\Users\jaymu\claude-workspace\patchwing-merged\tests\test_harness_failure.py", line 92, in test_b_non_retryable_class_terminates_on_the_first_raise
+    self.assertEqual(STATE_FAILED, got.state)
+AssertionError: 'failed' != 'pending'
+- failed
++ pending
+
+
+======================================================================
+FAIL: test_b_non_retryable_class_terminates_on_the_first_raise (test_harness_failure.HarnessFailureTest.test_b_non_retryable_class_terminates_on_the_first_raise) (exc='OSError')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "C:\Users\jaymu\claude-workspace\patchwing-merged\tests\test_harness_failure.py", line 92, in test_b_non_retryable_class_terminates_on_the_first_raise
+    self.assertEqual(STATE_FAILED, got.state)
+AssertionError: 'failed' != 'pending'
+- failed
++ pending
+
+
+======================================================================
+FAIL: test_b_retryable_class_gets_exactly_one_retry (test_harness_failure.HarnessFailureTest.test_b_retryable_class_gets_exactly_one_retry)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "C:\Users\jaymu\claude-workspace\patchwing-merged\tests\test_harness_failure.py", line 103, in test_b_retryable_class_gets_exactly_one_retry
+    meta = self._meta(f.id)
+           ^^^^^^^^^^^^^^^^
+  File "C:\Users\jaymu\claude-workspace\patchwing-merged\tests\test_harness_failure.py", line 62, in _meta
+    self.assertIsNotNone(art, "no harness_failure artifact was recorded — the "
+AssertionError: unexpectedly None : no harness_failure artifact was recorded — the outcome is unrecoverable from the DB
+
+======================================================================
+FAIL: test_b_second_identical_failure_terminates_and_says_so (test_harness_failure.HarnessFailureTest.test_b_second_identical_failure_terminates_and_says_so)
+C: if the second attempt fails the same way, terminate as an
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "C:\Users\jaymu\claude-workspace\patchwing-merged\tests\test_harness_failure.py", line 115, in test_b_second_identical_failure_terminates_and_says_so
+    self.assertEqual(STATE_FAILED, got.state)
+AssertionError: 'failed' != 'pending'
+- failed
++ pending
+
+
+======================================================================
+FAIL: test_d_patch_evaluated_is_false_on_every_harness_path (test_harness_failure.HarnessFailureTest.test_d_patch_evaluated_is_false_on_every_harness_path) (exc='KeyError')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "C:\Users\jaymu\claude-workspace\patchwing-merged\tests\test_harness_failure.py", line 151, in test_d_patch_evaluated_is_false_on_every_harness_path
+    self.assertIs(False, self._meta(f.id)["patch_evaluated"],
+                         ^^^^^^^^^^^^^^^^
+  File "C:\Users\jaymu\claude-workspace\patchwing-merged\tests\test_harness_failure.py", line 62, in _meta
+    self.assertIsNotNone(art, "no harness_failure artifact was recorded — the "
+AssertionError: unexpectedly None : no harness_failure artifact was recorded — the outcome is unrecoverable from the DB
+
+======================================================================
+FAIL: test_d_patch_evaluated_is_false_on_every_harness_path (test_harness_failure.HarnessFailureTest.test_d_patch_evaluated_is_false_on_every_harness_path) (exc='MemoryError')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "C:\Users\jaymu\claude-workspace\patchwing-merged\tests\test_harness_failure.py", line 151, in test_d_patch_evaluated_is_false_on_every_harness_path
+    self.assertIs(False, self._meta(f.id)["patch_evaluated"],
+                         ^^^^^^^^^^^^^^^^
+  File "C:\Users\jaymu\claude-workspace\patchwing-merged\tests\test_harness_failure.py", line 62, in _meta
+    self.assertIsNotNone(art, "no harness_failure artifact was recorded — the "
+AssertionError: unexpectedly None : no harness_failure artifact was recorded — the outcome is unrecoverable from the DB
+
+======================================================================
+FAIL: test_d_patch_evaluated_is_false_on_every_harness_path (test_harness_failure.HarnessFailureTest.test_d_patch_evaluated_is_false_on_every_harness_path) (exc='SandboxError')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "C:\Users\jaymu\claude-workspace\patchwing-merged\tests\test_harness_failure.py", line 151, in test_d_patch_evaluated_is_false_on_every_harness_path
+    self.assertIs(False, self._meta(f.id)["patch_evaluated"],
+                         ^^^^^^^^^^^^^^^^
+  File "C:\Users\jaymu\claude-workspace\patchwing-merged\tests\test_harness_failure.py", line 62, in _meta
+    self.assertIsNotNone(art, "no harness_failure artifact was recorded — the "
+AssertionError: unexpectedly None : no harness_failure artifact was recorded — the outcome is unrecoverable from the DB
+
+======================================================================
+FAIL: test_d_patch_evaluated_is_false_on_every_harness_path (test_harness_failure.HarnessFailureTest.test_d_patch_evaluated_is_false_on_every_harness_path) (exc='AuthError')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "C:\Users\jaymu\claude-workspace\patchwing-merged\tests\test_harness_failure.py", line 151, in test_d_patch_evaluated_is_false_on_every_harness_path
+    self.assertIs(False, self._meta(f.id)["patch_evaluated"],
+                         ^^^^^^^^^^^^^^^^
+  File "C:\Users\jaymu\claude-workspace\patchwing-merged\tests\test_harness_failure.py", line 62, in _meta
+    self.assertIsNotNone(art, "no harness_failure artifact was recorded — the "
+AssertionError: unexpectedly None : no harness_failure artifact was recorded — the outcome is unrecoverable from the DB
+
+======================================================================
+FAIL: test_d_patch_evaluated_is_false_on_every_harness_path (test_harness_failure.HarnessFailureTest.test_d_patch_evaluated_is_false_on_every_harness_path) (exc='OperationalError')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "C:\Users\jaymu\claude-workspace\patchwing-merged\tests\test_harness_failure.py", line 151, in test_d_patch_evaluated_is_false_on_every_harness_path
+    self.assertIs(False, self._meta(f.id)["patch_evaluated"],
+                         ^^^^^^^^^^^^^^^^
+  File "C:\Users\jaymu\claude-workspace\patchwing-merged\tests\test_harness_failure.py", line 62, in _meta
+    self.assertIsNotNone(art, "no harness_failure artifact was recorded — the "
+AssertionError: unexpectedly None : no harness_failure artifact was recorded — the outcome is unrecoverable from the DB
+
+----------------------------------------------------------------------
+Ran 9 tests in 0.011s
+
+FAILED (failures=15, errors=1)

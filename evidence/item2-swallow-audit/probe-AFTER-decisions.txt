@@ -1,0 +1,22 @@
+﻿EXCEPTION                          REALISTIC CAUSE                                               PRESENTS AS                             NOTE
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------
+SandboxError                       container will not start / exec fails / path escapes sandbox  state=pending attempts=1                one retry granted
+SandboxError (prepare not called)  sandbox lifecycle bug                                         state=pending attempts=1                one retry granted
+ModelError                         fix-writer API 5xx / unreachable                              state=pending attempts=1                one retry granted
+RefusalError                       fix-writer refuses the task                                   state=pending attempts=1                one retry granted
+AuthError                          bad/expired API key                                           state=failed attempts=1                 TERMINAL on first raise (infrastructure_failure)
+WallError                          oracle/wall integrity error                                   state=failed attempts=1                 TERMINAL on first raise (infrastructure_failure)
+EditError                          patch application fault                                       state=failed attempts=1                 TERMINAL on first raise (infrastructure_failure)
+sqlite3.OperationalError           concurrent DB access                                          state=pending attempts=1                one retry granted
+json.JSONDecodeError               malformed artifact meta                                       state=failed attempts=1                 TERMINAL on first raise (infrastructure_failure)
+OSError                            disk full mid-run / unreadable file                           state=failed attempts=1                 TERMINAL on first raise (infrastructure_failure)
+urllib.error.URLError              network error not wrapped by a stage                          state=pending attempts=1                one retry granted
+KeyError                           ordinary programming bug in a stage                           state=failed attempts=1                 TERMINAL on first raise (infrastructure_failure)
+AttributeError                     ordinary programming bug in a stage                           state=failed attempts=1                 TERMINAL on first raise (infrastructure_failure)
+MemoryError                        host OOM during a 6.57 GB image run                           state=failed attempts=1                 TERMINAL on first raise (infrastructure_failure)
+UnknownOutcome                     undeclared outcome value (exempted in 9a)                     ESCAPES the runner (UnknownOutcome)     propagates to the caller
+CeilingExceeded                    cost ceiling tripped (decorator catches it)                   BLOCKED (ceiling_exceeded)              caught by the stage() decorator, never reaches _advance
+KeyboardInterrupt                  operator ^C mid-run                                           ESCAPES the runner (KeyboardInterrupt)  propagates to the caller
+SystemExit                         sys.exit inside a stage                                       ESCAPES the runner (SystemExit)         propagates to the caller
+
+6 get exactly one retry; 8 terminate on the first raise; 4 never reach the catch.

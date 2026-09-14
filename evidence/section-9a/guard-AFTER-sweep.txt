@@ -1,0 +1,21 @@
+test_the_milestone_outcome_exists (test_outcome_coverage.ClosedSetTest.test_the_milestone_outcome_exists)
+Named explicitly. If VERIFY_GREEN is ever renamed away, the run that the ... ok
+test_validate_accepts_a_member (test_outcome_coverage.ClosedSetTest.test_validate_accepts_a_member) ... ok
+test_validate_rejects_a_typo (test_outcome_coverage.ClosedSetTest.test_validate_rejects_a_typo) ... ok
+test_every_outcome_is_in_the_closed_set (test_outcome_coverage.OutcomeCoverageTest.test_every_outcome_is_in_the_closed_set) ... ok
+test_every_terminating_path_carries_an_outcome (test_outcome_coverage.OutcomeCoverageTest.test_every_terminating_path_carries_an_outcome) ... ok
+test_no_declared_outcome_is_unused (test_outcome_coverage.OutcomeCoverageTest.test_no_declared_outcome_is_unused) ... ok
+test_no_outcome_is_computed_at_runtime (test_outcome_coverage.OutcomeCoverageTest.test_no_outcome_is_computed_at_runtime)
+A dynamic value cannot be checked against the closed set by reading the ... ok
+test_no_two_paths_share_an_outcome (test_outcome_coverage.OutcomeCoverageTest.test_no_two_paths_share_an_outcome) ... ok
+test_stages_is_the_only_construction_site (test_outcome_coverage.OutcomeCoverageTest.test_stages_is_the_only_construction_site) ... ok
+test_there_are_paths_to_check (test_outcome_coverage.OutcomeCoverageTest.test_there_are_paths_to_check)
+A walker that silently found nothing would make every test below pass. ... ok
+test_an_ordinary_exception_is_still_a_retry (test_outcome_coverage.RunnerDoesNotSwallowContractViolationsTest.test_an_ordinary_exception_is_still_a_retry)
+The exemption must be narrow. If it widened to all exceptions, a genuine ... ok
+test_an_undeclared_outcome_escapes_the_runner (test_outcome_coverage.RunnerDoesNotSwallowContractViolationsTest.test_an_undeclared_outcome_escapes_the_runner) ... ok
+
+----------------------------------------------------------------------
+Ran 12 tests in 0.178s
+
+OK

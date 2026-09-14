@@ -1,0 +1,50 @@
+# Fully local — nothing leaves your perimeter.
+#
+# Every model runs on hardware you control. This is the configuration for an
+# air-gapped VPC, a regulated environment, or anyone who read the July 2026
+# Hugging Face incident and concluded that sending crash artifacts to a
+# third-party API is not acceptable.
+#
+# The catch: the fixer role wants a large model, and large models want real
+# hardware. Options, roughly in order of how much you need:
+#   - a large open-weight coder served by vLLM on a GPU box
+#   - a mid-size coder (30-70B) — noticeably weaker at patch quality
+#   - GLM-5.2 (MIT, ~753B) if you have the machine for it
+#
+# Serve any of them with vLLM or llama.cpp; both expose /v1 and need no key.
+
+[models.detect]
+endpoint = "http://localhost:8000/v1"
+model = "UCSB-SURFI/VulnLLM-R-7B"
+temperature = 0.1
+max_tokens = 4096
+
+[models.patch]
+endpoint = "http://localhost:8001/v1"
+model = "your-self-hosted-coder"
+temperature = 0.2
+max_tokens = 8192
+timeout_s = 900          # local large-model generation is slower than an API
+
+[models.verify]
+# Different family than the fixer. If you only have hardware for one large
+# model, a smaller model from a different lineage still beats a second opinion
+# from the same one — shared blind spots make same-family agreement cheap.
+endpoint = "http://localhost:8002/v1"
+model = "a-different-family-model"
+temperature = 0.0
+max_tokens = 4096
+timeout_s = 900
+
+[sandbox]
+backend = "podman"
+network = "none"
+cpus = 4.0
+memory = "8g"
+timeout_s = 3600
+
+[pipeline]
+db = "patchwing.db"
+workdir = ".patchwing"
+max_attempts = 3
+reproducer_scope = "definition_a"

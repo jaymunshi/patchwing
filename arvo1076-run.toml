@@ -1,0 +1,43 @@
+# Run config for the CDATA leak (ARVO 1076) whole-file GLM run.
+# Everything goes to Together AI.
+
+# FIX-WRITER. GLM-5.2 (Z.ai). Distinct family from the advisory reviewer below,
+# which is the whole point: an author reviewing itself is not a second opinion.
+[models.patch]
+endpoint = "https://api.together.ai/v1"
+model = "zai-org/GLM-5.2"
+api_key_env = "TOGETHER_API_KEY"
+temperature = 0.2
+# 0 = omit from payload, server uses its own default. GLM-5.2 is a reasoning
+# model at 'max' effort by default; capping from here just kills the call before
+# the answer emits. Server default > any number we invent.
+max_tokens = 0
+timeout_s = 3600     # allow up to 60 min for thinking + answer
+
+# ADVISORY REVIEWER. Kimi-K2.7-Code. Different family from the fix-writer. Its
+# verdict cannot change the result; the container has ruled by the time it is
+# called.
+[models.verify]
+endpoint = "https://api.together.ai/v1"
+model = "moonshotai/Kimi-K2.7-Code"
+api_key_env = "TOGETHER_API_KEY"
+temperature = 0.0
+max_tokens = 4096
+timeout_s = 600
+
+[sandbox]
+backend = "podman"
+image = "docker.io/n132/arvo:1076-vul"
+network = "none"
+cpus = 6.0
+memory = "12g"
+# Per-command timeout, verified in sandbox.py. libxml2 is much smaller than
+# wireshark; 30 min is generous.
+timeout_s = 1800
+
+[pipeline]
+workdir = ".patchwing_1076"
+db = "arvo1076.db"
+max_attempts = 2
+max_patch_bytes = 65536
+reproducer_scope = "definition_a"

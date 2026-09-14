@@ -1,0 +1,204 @@
+....FF....
+======================================================================
+FAIL: test_every_terminating_path_carries_an_outcome (test_outcome_coverage.OutcomeCoverageTest.test_every_terminating_path_carries_an_outcome)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "C:\Users\jaymu\claude-workspace\patchwing-merged\tests\test_outcome_coverage.py", line 57, in test_every_terminating_path_carries_an_outcome
+    self.assertEqual(
+AssertionError: Lists differ: [] != [Path(lineno=89, func='guarded', kind='blo[4009 chars]lse)]
+
+Second list contains 53 additional elements.
+First extra element 0:
+Path(lineno=89, func='guarded', kind='blocked', outcome=None, dynamic=False)
+
+- []
++ [Path(lineno=89, func='guarded', kind='blocked', outcome=None, dynamic=False),
++  Path(lineno=524, func='ingest', kind='fail', outcome=None, dynamic=False),
++  Path(lineno=526, func='ingest', kind='reject', outcome=None, dynamic=False),
++  Path(lineno=528, func='ingest', kind='ok', outcome=None, dynamic=False),
++  Path(lineno=546, func='localize', kind='reject', outcome=None, dynamic=False),
++  Path(lineno=559, func='localize', kind='blocked', outcome=None, dynamic=False),
++  Path(lineno=579, func='localize', kind='ok', outcome=None, dynamic=False),
++  Path(lineno=583, func='localize', kind='blocked', outcome=None, dynamic=False),
++  Path(lineno=601, func='localize', kind='blocked', outcome=None, dynamic=False),
++  Path(lineno=615, func='localize', kind='blocked', outcome=None, dynamic=False),
++  Path(lineno=629, func='localize', kind='ok', outcome=None, dynamic=False),
++  Path(lineno=650, func='localize', kind='fail', outcome=None, dynamic=False),
++  Path(lineno=653, func='localize', kind='ok', outcome=None, dynamic=False),
++  Path(lineno=683,
++       func='reproduce',
++       kind='blocked',
++       outcome=None,
++       dynamic=False),
++  Path(lineno=689,
++       func='reproduce',
++       kind='blocked',
++       outcome=None,
++       dynamic=False),
++  Path(lineno=693,
++       func='reproduce',
++       kind='blocked',
++       outcome=None,
++       dynamic=False),
++  Path(lineno=712, func='reproduce', kind='fail', outcome=None, dynamic=False),
++  Path(lineno=724, func='reproduce', kind='retry', outcome=None, dynamic=False),
++  Path(lineno=726, func='reproduce', kind='reject', outcome=None, dynamic=False),
++  Path(lineno=746, func='reproduce', kind='fail', outcome=None, dynamic=False),
++  Path(lineno=748, func='reproduce', kind='fail', outcome=None, dynamic=False),
++  Path(lineno=761, func='reproduce', kind='ok', outcome=None, dynamic=False),
++  Path(lineno=810, func='patch', kind='blocked', outcome=None, dynamic=False),
++  Path(lineno=814, func='patch', kind='fail', outcome=None, dynamic=False),
++  Path(lineno=817, func='patch', kind='fail', outcome=None, dynamic=False),
++  Path(lineno=831, func='patch', kind='fail', outcome=None, dynamic=False),
++  Path(lineno=838, func='patch', kind='fail', outcome=None, dynamic=False),
++  Path(lineno=844, func='patch', kind='fail', outcome=None, dynamic=False),
++  Path(lineno=848, func='patch', kind='reject', outcome=None, dynamic=False),
++  Path(lineno=864, func='patch', kind='fail', outcome=None, dynamic=False),
++  Path(lineno=870, func='patch', kind='fail', outcome=None, dynamic=False),
++  Path(lineno=913, func='patch', kind='fail', outcome=None, dynamic=False),
++  Path(lineno=917, func='patch', kind='retry', outcome=None, dynamic=False),
++  Path(lineno=927, func='patch', kind='retry', outcome=None, dynamic=False),
++  Path(lineno=936, func='patch', kind='reject', outcome=None, dynamic=False),
++  Path(lineno=955, func='patch', kind='ok', outcome=None, dynamic=False),
++  Path(lineno=974, func='verify', kind='blocked', outcome=None, dynamic=False),
++  Path(lineno=978, func='verify', kind='fail', outcome=None, dynamic=False),
++  Path(lineno=980, func='verify', kind='retry', outcome=None, dynamic=False),
++  Path(lineno=985, func='verify', kind='fail', outcome=None, dynamic=False),
++  Path(lineno=989, func='verify', kind='fail', outcome=None, dynamic=False),
++  Path(lineno=995, func='verify', kind='fail', outcome=None, dynamic=False),
++  Path(lineno=1018, func='verify', kind='fail', outcome=None, dynamic=False),
++  Path(lineno=1078, func='verify', kind='fail', outcome=None, dynamic=False),
++  Path(lineno=1108, func='verify', kind='fail', outcome=None, dynamic=False),
++  Path(lineno=1185, func='verify', kind='retry', outcome=None, dynamic=False),
++  Path(lineno=1190, func='verify', kind='reject', outcome=None, dynamic=False),
++  Path(lineno=1197, func='verify', kind='reject', outcome=None, dynamic=False),
++  Path(lineno=1210, func='verify', kind='ok', outcome=None, dynamic=False),
++  Path(lineno=1231, func='package', kind='fail', outcome=None, dynamic=False),
++  Path(lineno=1233, func='package', kind='fail', outcome=None, dynamic=False),
++  Path(lineno=1319, func='package', kind='ok', outcome=None, dynamic=False),
++  Path(lineno=1328, func='review', kind='blocked', outcome=None, dynamic=False)] : 53 of 55 terminating path(s) carry no outcome value:
+  stages.py:89 in guarded() -> StageResult.blocked
+  stages.py:524 in ingest() -> StageResult.fail
+  stages.py:526 in ingest() -> StageResult.reject
+  stages.py:528 in ingest() -> StageResult.ok
+  stages.py:546 in localize() -> StageResult.reject
+  stages.py:559 in localize() -> StageResult.blocked
+  stages.py:579 in localize() -> StageResult.ok
+  stages.py:583 in localize() -> StageResult.blocked
+  stages.py:601 in localize() -> StageResult.blocked
+  stages.py:615 in localize() -> StageResult.blocked
+  stages.py:629 in localize() -> StageResult.ok
+  stages.py:650 in localize() -> StageResult.fail
+  stages.py:653 in localize() -> StageResult.ok
+  stages.py:683 in reproduce() -> StageResult.blocked
+  stages.py:689 in reproduce() -> StageResult.blocked
+  stages.py:693 in reproduce() -> StageResult.blocked
+  stages.py:712 in reproduce() -> StageResult.fail
+  stages.py:724 in reproduce() -> StageResult.retry
+  stages.py:726 in reproduce() -> StageResult.reject
+  stages.py:746 in reproduce() -> StageResult.fail
+  stages.py:748 in reproduce() -> StageResult.fail
+  stages.py:761 in reproduce() -> StageResult.ok
+  stages.py:810 in patch() -> StageResult.blocked
+  stages.py:814 in patch() -> StageResult.fail
+  stages.py:817 in patch() -> StageResult.fail
+  stages.py:831 in patch() -> StageResult.fail
+  stages.py:838 in patch() -> StageResult.fail
+  stages.py:844 in patch() -> StageResult.fail
+  stages.py:848 in patch() -> StageResult.reject
+  stages.py:864 in patch() -> StageResult.fail
+  stages.py:870 in patch() -> StageResult.fail
+  stages.py:913 in patch() -> StageResult.fail
+  stages.py:917 in patch() -> StageResult.retry
+  stages.py:927 in patch() -> StageResult.retry
+  stages.py:936 in patch() -> StageResult.reject
+  stages.py:955 in patch() -> StageResult.ok
+  stages.py:974 in verify() -> StageResult.blocked
+  stages.py:978 in verify() -> StageResult.fail
+  stages.py:980 in verify() -> StageResult.retry
+  stages.py:985 in verify() -> StageResult.fail
+  stages.py:989 in verify() -> StageResult.fail
+  stages.py:995 in verify() -> StageResult.fail
+  stages.py:1018 in verify() -> StageResult.fail
+  stages.py:1078 in verify() -> StageResult.fail
+  stages.py:1108 in verify() -> StageResult.fail
+  stages.py:1185 in verify() -> StageResult.retry
+  stages.py:1190 in verify() -> StageResult.reject
+  stages.py:1197 in verify() -> StageResult.reject
+  stages.py:1210 in verify() -> StageResult.ok
+  stages.py:1231 in package() -> StageResult.fail
+  stages.py:1233 in package() -> StageResult.fail
+  stages.py:1319 in package() -> StageResult.ok
+  stages.py:1328 in review() -> StageResult.blocked
+
+======================================================================
+FAIL: test_no_declared_outcome_is_unused (test_outcome_coverage.OutcomeCoverageTest.test_no_declared_outcome_is_unused)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "C:\Users\jaymu\claude-workspace\patchwing-merged\tests\test_outcome_coverage.py", line 95, in test_no_declared_outcome_is_unused
+    self.assertEqual([], unused,
+AssertionError: Lists differ: [] != ['ceiling_exceeded', 'ingest_accepted', 'i[1396 chars]ion']
+
+Second list contains 53 additional elements.
+First extra element 0:
+'ceiling_exceeded'
+
+- []
++ ['ceiling_exceeded',
++  'ingest_accepted',
++  'ingest_missing_fields',
++  'ingest_nothing_to_localize',
++  'localize_by_symptom',
++  'localize_declared_files_missing',
++  'localize_from_spec',
++  'localize_from_upstream_fix',
++  'localize_no_model_configured',
++  'localize_no_spec',
++  'localize_supply_chain_advisory',
++  'localize_symptom_failed',
++  'localize_upstream_fix_unresolved',
++  'package_assembled',
++  'package_missing_inputs',
++  'package_no_reproducer_lock',
++  'patch_auth_config_error',
++  'patch_did_not_apply',
++  'patch_diff_too_large',
++  'patch_localization_empty',
++  'patch_lock_unreadable',
++  'patch_model_call_failed',
++  'patch_no_localization',
++  'patch_no_reproducer_lock',
++  'patch_no_spec',
++  'patch_source_unreadable_in_image',
++  'patch_source_unreadable_on_host',
++  'patch_target_frozen',
++  'patch_target_inside_wall',
++  'patch_written',
++  'reproduce_did_not_reproduce',
++  'reproduce_needs_execution_plane',
++  'reproduce_no_command',
++  'reproduce_no_spec',
++  'reproduce_prebuild_failed',
++  'reproduce_red_confirmed',
++  'reproduce_timeout',
++  'reproduce_wall_has_no_reproducer',
++  'reproduce_wall_not_established',
++  'review_awaiting_human',
++  'verify_build_did_not_consume_patch',
++  'verify_fix_did_not_resolve',
++  'verify_green',
++  'verify_lock_unreadable',
++  'verify_no_patch_artifact',
++  'verify_no_reproducer_lock',
++  'verify_no_spec',
++  'verify_patch_names_no_file',
++  'verify_patch_stale',
++  'verify_reproducer_timeout',
++  'verify_suite_broken',
++  'verify_wall_violated_before_build',
++  'verify_wall_violated_during_execution'] : declared but unreachable outcome(s) — the closed set has drifted from the paths it describes: ['ceiling_exceeded', 'ingest_accepted', 'ingest_missing_fields', 'ingest_nothing_to_localize', 'localize_by_symptom', 'localize_declared_files_missing', 'localize_from_spec', 'localize_from_upstream_fix', 'localize_no_model_configured', 'localize_no_spec', 'localize_supply_chain_advisory', 'localize_symptom_failed', 'localize_upstream_fix_unresolved', 'package_assembled', 'package_missing_inputs', 'package_no_reproducer_lock', 'patch_auth_config_error', 'patch_did_not_apply', 'patch_diff_too_large', 'patch_localization_empty', 'patch_lock_unreadable', 'patch_model_call_failed', 'patch_no_localization', 'patch_no_reproducer_lock', 'patch_no_spec', 'patch_source_unreadable_in_image', 'patch_source_unreadable_on_host', 'patch_target_frozen', 'patch_target_inside_wall', 'patch_written', 'reproduce_did_not_reproduce', 'reproduce_needs_execution_plane', 'reproduce_no_command', 'reproduce_no_spec', 'reproduce_prebuild_failed', 'reproduce_red_confirmed', 'reproduce_timeout', 'reproduce_wall_has_no_reproducer', 'reproduce_wall_not_established', 'review_awaiting_human', 'verify_build_did_not_consume_patch', 'verify_fix_did_not_resolve', 'verify_green', 'verify_lock_unreadable', 'verify_no_patch_artifact', 'verify_no_reproducer_lock', 'verify_no_spec', 'verify_patch_names_no_file', 'verify_patch_stale', 'verify_reproducer_timeout', 'verify_suite_broken', 'verify_wall_violated_before_build', 'verify_wall_violated_during_execution']
+
+----------------------------------------------------------------------
+Ran 10 tests in 0.131s
+
+FAILED (failures=2)

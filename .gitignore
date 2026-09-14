@@ -1,0 +1,39 @@
+# --- Python ---
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+
+# --- Secrets / local config (never commit) ---
+.env
+*.pem
+*.key
+id_rsa*
+patchwing.toml          # live config may name real endpoints; ship examples/ instead
+
+# --- Runtime state: the LIVE database (holds model_config incl. api_key) ---
+# demo.db is intentionally tracked (a keyless demo dataset); the runtime DB is NOT.
+patchwing.db
+patchwing.db-wal
+patchwing.db-shm
+*.sqlite
+*.sqlite3
+
+# --- Large / non-repo artifacts ---
+*.ova
+*.vdi
+*.tar
+*.tar.gz
+
+# --- OS cruft ---
+.DS_Store
+Thumbs.db
+
+# --- personal / host-specific (not for public repo) ---
+jinja-run.toml
+ollama-lan.toml
+patchwing.service.copy
+scratch/

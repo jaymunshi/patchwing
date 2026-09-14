@@ -1,0 +1,22 @@
+EXCEPTION                          REALISTIC CAUSE                                               PRESENTS AS                             NOTE
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------
+SandboxError                       container will not start / exec fails / path escapes sandbox  state=pending attempts=1                swallowed -> retried
+SandboxError (prepare not called)  sandbox lifecycle bug                                         state=pending attempts=1                swallowed -> retried
+ModelError                         fix-writer API 5xx / unreachable                              state=pending attempts=1                swallowed -> retried
+RefusalError                       fix-writer refuses the task                                   state=pending attempts=1                swallowed -> retried
+AuthError                          bad/expired API key                                           state=pending attempts=1                swallowed -> retried
+WallError                          oracle/wall integrity error                                   state=pending attempts=1                swallowed -> retried
+EditError                          patch application fault                                       state=pending attempts=1                swallowed -> retried
+sqlite3.OperationalError           concurrent DB access                                          state=pending attempts=1                swallowed -> retried
+json.JSONDecodeError               malformed artifact meta                                       state=pending attempts=1                swallowed -> retried
+OSError                            disk full mid-run / unreadable file                           state=pending attempts=1                swallowed -> retried
+urllib.error.URLError              network error not wrapped by a stage                          state=pending attempts=1                swallowed -> retried
+KeyError                           ordinary programming bug in a stage                           state=pending attempts=1                swallowed -> retried
+AttributeError                     ordinary programming bug in a stage                           state=pending attempts=1                swallowed -> retried
+MemoryError                        host OOM during a 6.57 GB image run                           state=pending attempts=1                swallowed -> retried
+UnknownOutcome                     undeclared outcome value (exempted in 9a)                     ESCAPES the runner (UnknownOutcome)     propagates to the caller
+CeilingExceeded                    cost ceiling tripped (decorator catches it)                   BLOCKED (ceiling_exceeded)              caught by the stage() decorator, never reaches _advance
+KeyboardInterrupt                  operator ^C mid-run                                           ESCAPES the runner (KeyboardInterrupt)  propagates to the caller
+SystemExit                         sys.exit inside a stage                                       ESCAPES the runner (SystemExit)         propagates to the caller
+
+14 of 18 present as a retry.

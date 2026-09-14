@@ -1,0 +1,54 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sign in — PatchWing</title>
+<style>
+:root{--bg:#0d1117;--panel:#161b22;--bd:#30363d;--fg:#e6edf3;--mut:#8b949e;--acc:#2f81f7;--ok:#3fb950;--bad:#f85149}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.5 system-ui,Segoe UI,Roboto,sans-serif;
+     display:flex;min-height:100vh;align-items:center;justify-content:center}
+.card{background:var(--panel);border:1px solid var(--bd);border-radius:12px;padding:28px;width:340px}
+.brand{display:flex;align-items:center;gap:10px;margin:0 0 18px}
+.brand h1{font-size:18px;margin:0}
+label{display:block;font-size:13px;color:var(--mut);margin:12px 0 4px}
+input{width:100%;background:#0d1117;border:1px solid var(--bd);color:var(--fg);
+      padding:10px 12px;border-radius:6px;font:14px system-ui,sans-serif}
+input:focus{outline:none;border-color:var(--acc)}
+button{width:100%;margin-top:18px;background:var(--acc);color:#fff;border:0;
+       padding:11px 12px;border-radius:6px;font:600 14px system-ui,sans-serif;cursor:pointer}
+button:hover{filter:brightness(1.08)}
+.err{color:var(--bad);font-size:13px;margin-top:12px;min-height:1em}
+.hint{color:var(--mut);font-size:12px;margin-top:14px;text-align:center}
+</style></head><body>
+<form class="card" onsubmit="doLogin(event)">
+  <div class="brand"><span>&#129714;</span><h1>PatchWing</h1></div>
+  <label for="email">Username or email</label>
+  <input id="email" name="email" autocomplete="username" required autofocus value="admin">
+  <label for="pw">Password</label>
+  <input id="pw" name="password" type="password" autocomplete="current-password" required>
+  <button type="submit">Sign in</button>
+  <div class="err" id="err"></div>
+  <div class="hint">Default: admin / admin &mdash; change from Providers after signing in.</div>
+</form>
+<script>
+async function doLogin(ev) {
+  ev.preventDefault();
+  document.getElementById("err").textContent = "";
+  const email = document.getElementById("email").value.trim();
+  const password = document.getElementById("pw").value;
+  const r = await fetch("/api/login", {
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({email, password}),
+  });
+  const j = await r.json().catch(() => ({}));
+  if (r.ok && j.ok) {
+    const next = new URLSearchParams(location.search).get("next") || "/app";
+    location.href = next;
+  } else {
+    document.getElementById("err").textContent = j.error || "Sign in failed.";
+    document.getElementById("pw").focus();
+    document.getElementById("pw").select();
+  }
+}
+</script>
+</body></html>

@@ -1,0 +1,18 @@
+test_a_raise_records_a_declared_outcome (test_harness_failure.HarnessFailureTest.test_a_raise_records_a_declared_outcome) ... ok
+test_a_the_traceback_is_still_attached (test_harness_failure.HarnessFailureTest.test_a_the_traceback_is_still_attached) ... ok
+test_b_a_retryable_class_still_only_ever_gets_one (test_harness_failure.HarnessFailureTest.test_b_a_retryable_class_still_only_ever_gets_one)
+Bounded at ONE, not at max_attempts. The runner's default is 3. ... ok
+test_b_never_retry_beats_retryable_superclass (test_harness_failure.HarnessFailureTest.test_b_never_retry_beats_retryable_superclass)
+AuthError subclasses ModelError. A 401 does not become a 200 twice. ... ok
+test_b_non_retryable_class_terminates_on_the_first_raise (test_harness_failure.HarnessFailureTest.test_b_non_retryable_class_terminates_on_the_first_raise) ... ok
+test_b_retryable_class_gets_exactly_one_retry (test_harness_failure.HarnessFailureTest.test_b_retryable_class_gets_exactly_one_retry) ... ok
+test_b_second_identical_failure_terminates_and_says_so (test_harness_failure.HarnessFailureTest.test_b_second_identical_failure_terminates_and_says_so)
+C: if the second attempt fails the same way, terminate as an ... ok
+test_d_a_harness_failure_is_never_a_rejection (test_harness_failure.HarnessFailureTest.test_d_a_harness_failure_is_never_a_rejection)
+REJECTED means judged and found wanting. Nothing here judged anything. ... ok
+test_d_patch_evaluated_is_false_on_every_harness_path (test_harness_failure.HarnessFailureTest.test_d_patch_evaluated_is_false_on_every_harness_path) ... ok
+
+----------------------------------------------------------------------
+Ran 9 tests in 0.010s
+
+OK

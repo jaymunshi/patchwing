@@ -1,0 +1,97 @@
+# ARVO 1237 — THE MILESTONE RUN. ORACLE LOCALIZATION, FULL CHAIN.
+#
+# The question this run answers is NOT "can a model find the bug" and NOT "can a
+# model write a hard fix". It is:
+#
+#     red -> patch -> rebuild -> green -> ROLL BACK -> rebuild -> RED AGAIN
+#
+# i.e. CHAIN OF CUSTODY. The vulnerable file is supplied as ground truth and the
+# region is handed over, so localization is ORACLED — deliberately. A package from
+# this run must say so in its own text; a package that omits it is claiming more
+# than the run earned.
+#
+# The ground-truth PATCH is never supplied — only the file and the region.
+#
+# WHY THIS BUG. Its pristine exit code is 1, the least distinctive non-zero code
+# there is. Under a plain non-zero = red test, a missing mount, a shell error and a
+# container that never started all read as "the bug reproduced" — and at the
+# rollback leg the assertion IS "red again", so any malfunction would satisfy it.
+# That is why §6b' exists: exit code + sanitizer marker + DEDUP_TOKEN identity,
+# resolving to four states, of which two are neither red nor green.
+
+[target]
+name = "arvo-1237-oracle"
+mode = "in-image"                     # source lives in the image, patched in place
+image = "docker.io/n132/arvo:1237-vul"
+root = "/src/wireshark"               # source tree INSIDE the image
+artifact = "/out/fuzzshark_ip_proto-udp"   # must change after a real patch
+prebuilt = true                       # image ships the built binary; do not compile
+                                      # before the first reproduce
+language = "c"
+path = "."
+
+[finding]
+source = "arvo"
+source_ref = "ARVO-1237"
+cwe = "CWE-787"
+title = "Global-buffer-overflow WRITE in COM_Parse via Cmd_TokenizeString (wireshark quakeworld dissector, OSS-Fuzz 1237)"
+description = """
+AddressSanitizer reports a global-buffer-overflow WRITE reached through
+dissect_quakeworld_ConnectionlessPacket -> Cmd_TokenizeString -> COM_Parse while
+dissecting a QuakeWorld connectionless packet carried over UDP.
+
+COM_Parse scans a token out of the packet text without being told how much text
+there is, so its scan loops run past the end of the buffer and write beyond it.
+
+  SUMMARY: AddressSanitizer: global-buffer-overflow
+           epan/dissectors/packet-quakeworld.c:134:20 in COM_Parse
+  DEDUP_TOKEN: COM_Parse--Cmd_TokenizeString--dissect_quakeworld_ConnectionlessPacket
+
+ORACLE RUN: the vulnerable file and the region are given, not localized. What is
+being demonstrated is chain of custody — that the diff is the thing that closed
+the bug, and that removing it brings the bug back — NOT unassisted localization
+and NOT fix difficulty.
+"""
+files = ["epan/dissectors/packet-quakeworld.c"]      # <-- ORACLE: ground truth
+
+# ORACLE REGION — first-class, because it is the run's largest caveat.
+# CONTIGUOUS. Do NOT split: the real fix changes a function signature
+# (Cmd_TokenizeString gains a text_len parameter), the declarations, and the call
+# site. Those are three hunks that only make sense together; a region split into
+# three would let a patch satisfy one hunk while leaving the bug reachable.
+[oracle]
+file = "epan/dissectors/packet-quakeworld.c"
+region_start = 85
+region_end = 348
+region_lines = 263
+contiguous = true
+localization_is_oracled = true
+why_wide = """
+The fix is multi-hunk: Cmd_TokenizeString gains a text_len parameter, the
+declarations change with it, and the call site in
+dissect_quakeworld_ConnectionlessPacket must pass the length. Signature,
+declaration and call site have to move together, so the region spans all three
+rather than pointing at the overflowing loop alone.
+"""
+what_this_run_demonstrates = "chain of custody, not unassisted localization or fix difficulty"
+
+[commands]
+build     = "arvo compile"
+reproduce = "arvo run"
+test      = "arvo run"
+
+# DECLARED, never inferred. The machine-derived minimized testcase, and what the
+# wall exists to protect. It lives OUTSIDE root, so the path is absolute.
+# sha256 e9a22c77a9970fc8043d9bd7acf1de402f7720ba19104ca07e933953c2639f95 (699 bytes)
+[reproducer]
+files = ["/tmp/poc"]
+
+# EXPLICITLY EMPTY, not absent. ARVO targets are fuzz harnesses, not projects with
+# a separate regression suite. Absent would mean "scan", which on this corpus
+# sweeps the whole wireshark tree into the frozen set and makes
+# packet-quakeworld.c — the file the fix-writer must edit — immutable.
+#
+# The honest consequence, and the package must not hide it: this run CANNOT answer
+# "did the fix break anything else".
+[suite]
+files = []

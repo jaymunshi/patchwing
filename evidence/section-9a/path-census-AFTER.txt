@@ -1,0 +1,74 @@
+TOTAL StageResult terminating paths: 55
+LABELLED (meta outcome): 55   UNLABELLED: 0
+
+
+--- guarded ---
+L100   blocked  ceiling_exceeded             CEILING EXCEEDED — run halted in stage ''.  against . Raise pipeline.max_tokens_per_find
+
+--- ingest ---
+L536   fail     ingest_missing_fields        missing required field(s): 
+L540   reject   ingest_nothing_to_localize   no description, CWE, or source reference — nothing to localize from
+L543   ok       ingest_accepted              accepted
+
+--- localize ---
+L561   reject   localize_supply_chain_advisory supply-chain / malicious-publish advisory — there is no code vulnerability to localize o
+L575   blocked  localize_upstream_fix_unresolved could not resolve an upstream fix: . Attach a target spec with --spec to localize manual
+L596   ok       localize_from_upstream_fix   localized to  file(s) from upstream fix 
+L601   blocked  localize_no_spec             no target spec attached — add the finding with --spec, or implement a repository-fetchin
+L620   blocked  localize_no_model_configured symptom localization needs a model and none is configured (). Declare files in the spec,
+L635   blocked  localize_symptom_failed      symptom localization failed: 
+L650   ok       localize_by_symptom          localized by symptom to  (+ alternates) from 
+L672   fail     localize_declared_files_missing declared file(s) not found: 
+L677   ok       localize_from_spec           
+
+--- reproduce ---
+L707   blocked  reproduce_needs_execution_plane localized to  file(s) and the upstream reference fix is attached. Reproducing needs the 
+L714   blocked  reproduce_no_spec            no target spec attached
+L719   blocked  reproduce_no_command         spec defines no reproduce command — a finding without a failing reproducer cannot be ver
+L739   fail     reproduce_prebuild_failed    build failed: 
+L752   retry    reproduce_timeout            reproducer timed out
+L755   reject   reproduce_did_not_reproduce  reproducer passed on unpatched code — the vulnerability does not reproduce, so there is 
+L777   fail     reproduce_wall_not_established WALL NOT ESTABLISHED — 
+L780   fail     reproduce_wall_has_no_reproducer WALL NOT ESTABLISHED — the frozen set contains no reproducer. Declare [reproducer] files
+L794   ok       reproduce_red_confirmed      reproduced (exit ); 
+
+--- patch ---
+L844   blocked  patch_no_spec                no target spec attached
+L849   fail     patch_no_localization        no localization artifact — run localize first
+L853   fail     patch_localization_empty     localization produced no files
+L868   fail     patch_no_reproducer_lock     no reproducer_lock artifact — the wall was never frozen, so a patch produced now could n
+L876   fail     patch_lock_unreadable        reproducer_lock is unreadable: 
+L883   fail     patch_target_frozen          PATCH TARGET IS FROZEN — 
+L888   reject   patch_target_inside_wall     localization named , which is inside the reproducer wall (). The fix-writer may not modi
+L905   fail     patch_source_unreadable_in_image cannot read  from image: 
+L913   fail     patch_source_unreadable_on_host cannot read : 
+L958   fail     patch_auth_config_error      CONFIG ERROR (auth) - 
+L963   retry    patch_model_call_failed      patch model call failed: 
+L974   retry    patch_did_not_apply          PATCH DID NOT APPLY - 
+L983   reject   patch_diff_too_large         
+L1004  ok       patch_written                
+
+--- verify ---
+L1024  blocked  verify_no_spec               no target spec attached
+L1029  fail     verify_no_patch_artifact     no patch artifact — run patch first
+L1032  retry    verify_patch_stale           patch is stale (repo moved since it was generated) — regenerating
+L1038  fail     verify_patch_names_no_file   patch artifact does not name a file
+L1043  fail     verify_no_reproducer_lock    no reproducer_lock artifact — nothing pins the reproducer, so a green result here would 
+L1050  fail     verify_lock_unreadable       reproducer_lock is unreadable: 
+L1074  fail     verify_wall_violated_before_build REPRODUCER WALL VIOLATED — the run is void. 
+L1114  retry    build_timeout_kill           BUILD TIMED OUT after s against a s ceiling. The patch was NOT evaluated — this is absen
+L1123  reject   build_compile_failure        BUILD FAILED TO COMPILE in s (exit ) — the patch is not valid code: 
+L1136  fail     verify_build_did_not_consume_patch BUILD DID NOT CONSUME THE PATCH — run void.  is byte-identical after compiling a non-emp
+L1168  fail     verify_wall_violated_during_execution REPRODUCER WALL VIOLATED DURING EXECUTION — the run is void. 
+L1247  retry    verify_reproducer_timeout    reproducer TIMED OUT under the patch — absence, not failure; the patch was not judged
+L1254  reject   verify_fix_did_not_resolve   patch does not close the bug — reproducer still fails (exit ). Built and ran; the fix is
+L1263  reject   verify_suite_broken          patch breaks the existing test suite (exit ) — a fix that breaks the feature is not a fi
+L1282  ok       verify_green                 reproducer closed and test suite green; wall intact ( file(s) unchanged)
+
+--- package ---
+L1304  fail     package_missing_inputs       missing patch or verdict artifact
+L1307  fail     package_no_reproducer_lock   no reproducer_lock — the bundle cannot attest that the reproducer was unchanged, which i
+L1394  ok       package_assembled            evidence bundle assembled
+
+--- review ---
+L1403  blocked  review_awaiting_human        awaiting human sign-off

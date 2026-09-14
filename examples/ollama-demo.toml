@@ -1,0 +1,34 @@
+# Local demo config — everything on this machine, nothing leaves.
+#
+# Ollama exposes an OpenAI-compatible API on /v1, so it needs no adapter and no
+# key. Good enough to exercise the whole pipeline before wiring a larger fixer.
+#
+#   ollama serve
+#   python -m patchwing.cli --config examples/ollama-demo.toml preflight
+
+[models.patch]
+endpoint = "http://localhost:11434/v1"
+model = "qwen3.6:27b-fast"
+temperature = 0.2
+max_tokens = 8192
+timeout_s = 900
+
+[models.verify]
+# Different family would be better; this machine only has one. PatchWing warns,
+# and it is right to — a same-family verifier mostly agrees with the fixer.
+endpoint = "http://localhost:11434/v1"
+model = "qwen3.6:27b-fast"
+temperature = 0.0
+max_tokens = 4096
+timeout_s = 900
+
+[sandbox]
+# 'none' = run on the host. Acceptable here only because the demo target is code
+# we wrote ourselves. Real targets belong in the disposable VM.
+backend = "none"
+
+[pipeline]
+db = "patchwing.db"
+workdir = ".patchwing"
+max_attempts = 2
+reproducer_scope = "definition_a"

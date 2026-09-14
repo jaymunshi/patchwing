@@ -1,0 +1,65 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1"><title>PatchWing</title>
+<style>
+:root{--bg:#0d1117;--panel:#161b22;--bd:#30363d;--fg:#e6edf3;--mut:#8b949e;--acc:#2f81f7;--ok:#3fb950}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.6 system-ui,Segoe UI,Roboto,sans-serif}
+a{color:var(--acc);text-decoration:none}
+header{display:flex;align-items:center;gap:14px;padding:14px 22px;border-bottom:1px solid var(--bd)}
+header h1{font-size:16px;margin:0}
+.tabs{display:flex;gap:4px;margin-left:6px}
+.tab{color:var(--mut);padding:5px 14px;border-radius:6px;border:1px solid transparent}
+.tab.active{background:var(--panel);color:var(--fg);border-color:var(--bd)}
+.hero{max-width:900px;margin:0 auto;padding:64px 22px 10px;text-align:center}
+.hero .big{font-size:42px;font-weight:700;letter-spacing:-.5px;margin:0 0 6px}
+.hero .tag{font-size:22px;margin:0}
+.hero .sub{font-size:16px;color:var(--mut);max-width:690px;margin:18px auto 0}
+.cta{display:flex;gap:12px;justify-content:center;margin:28px 0 8px;flex-wrap:wrap}
+.btn{background:var(--acc);color:#fff;padding:11px 22px;border-radius:8px;font-weight:600}
+.btn.ghost{background:transparent;border:1px solid var(--bd);color:var(--fg)}
+.pipe{max-width:980px;margin:30px auto;display:flex;gap:6px;justify-content:center;flex-wrap:wrap;padding:0 22px}
+.stage{background:var(--panel);border:1px solid var(--bd);border-radius:20px;padding:7px 15px;font-size:13px;color:var(--fg)}
+.arrow{color:var(--mut);align-self:center}
+.grid{max-width:980px;margin:44px auto;display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px;padding:0 22px}
+.card{background:var(--panel);border:1px solid var(--bd);border-radius:12px;padding:18px}
+.card h3{margin:0 0 6px;font-size:15px}.card p{margin:0;color:var(--mut);font-size:14px}
+.foot{max-width:980px;margin:30px auto 60px;padding:0 22px;color:var(--mut);font-size:13px;text-align:center}
+</style></head><body>
+<header><h1>&#129714; PatchWing</h1>
+<span class="tabs"><a class="tab active" href="/">Home</a><a class="tab" href="/app#pipe">Pipeline</a><a class="tab" href="/app#feed">Feed</a><a class="tab" href="/providers">Providers</a></span>
+<span style="margin-left:auto"></span>
+<span class="tab" id="whoami" style="color:var(--mut);border:0"></span>
+<a class="tab" href="#" onclick="return signOut()" title="End session">Sign out</a></header>
+<script>
+async function signOut() {
+  try { await fetch("/api/logout", {method:"POST"}); } catch (_) {}
+  location.href = "/login";
+  return false;
+}
+fetch("/api/whoami").then(r => r.ok ? r.json() : {}).then(j => {
+  const el = document.getElementById("whoami");
+  if (el && j.user) el.textContent = "signed in as " + j.user.email;
+}).catch(() => {});
+</script>
+<div class="hero">
+  <p class="big">Finding vulnerabilities isn't the bottleneck.</p>
+  <p class="tag">Verified <span style="color:var(--ok)">fixing</span> is.</p>
+  <p class="sub">PatchWing takes a known vulnerability and produces a fix a maintainer can merge: a reproducer that fails before and passes after, a minimal patch, a regression test, the project's own suite still green, and a human sign-off. Not another scanner &mdash; a closure pipeline.</p>
+  <div class="cta"><a class="btn" href="/app">Open the console &rarr;</a><a class="btn ghost" href="/providers">Configure providers</a></div>
+</div>
+<div class="pipe">
+  <span class="stage">ingest</span><span class="arrow">&rarr;</span>
+  <span class="stage">localize</span><span class="arrow">&rarr;</span>
+  <span class="stage">reproduce</span><span class="arrow">&rarr;</span>
+  <span class="stage">patch</span><span class="arrow">&rarr;</span>
+  <span class="stage">verify</span><span class="arrow">&rarr;</span>
+  <span class="stage">package</span><span class="arrow">&rarr;</span>
+  <span class="stage">review</span>
+</div>
+<div class="grid">
+  <div class="card"><h3>Sandboxed proof</h3><p>Every reproducer and verification runs in a disposable container with no network. The bug is demonstrated on real code, not asserted.</p></div>
+  <div class="card"><h3>Bring your own model</h3><p>Per-role endpoints for any OpenAI-compatible provider &mdash; Together, OpenAI, Grok, local Ollama &mdash; plus native Claude. Keys stay on your box. Set it on the <a href="/providers">Providers</a> page.</p></div>
+  <div class="card"><h3>Adversarial by design</h3><p>Fixer and verifier are different model families, so the second opinion doesn't share the first's blind spots. A machine never signs off its own work.</p></div>
+  <div class="card"><h3>Definition-A only</h3><p>Reproducers demonstrate a trigger and an observable boundary violation, and stop there &mdash; exploitability proof, nothing weaponized beyond it.</p></div>
+</div>
+<div class="foot">Defensive vulnerability closure &middot; self-hosted, single-tenant &middot; every step recorded in an auditable log.</div>
+</body></html>

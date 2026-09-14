@@ -1,0 +1,288 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1"><title>PatchWing - Providers</title>
+<style>
+:root{--bg:#0d1117;--card:#161b22;--bd:#30363d;--fg:#e6edf3;--mut:#8b949e;--acc:#2f81f7;--ok:#3fb950;--warn:#d29922;--err:#f85149}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--fg);font:14px/1.5 system-ui,Segoe UI,Roboto,sans-serif}
+header{padding:16px 22px;border-bottom:1px solid var(--bd);display:flex;align-items:center;gap:14px}
+header h1{font-size:16px;margin:0}header a{color:var(--acc);text-decoration:none;font-size:13px}
+.tabs{display:flex;gap:4px;margin-left:6px}
+.tab{background:transparent;border:1px solid transparent;color:var(--mut);padding:5px 14px;border-radius:6px;text-decoration:none;font-size:13px}
+.tab.active{background:var(--card);color:var(--fg);border-color:var(--bd)}
+.wrap{max-width:1120px;margin:0 auto;padding:22px}
+.warns{background:rgba(210,153,34,.12);border:1px solid var(--warn);border-radius:8px;padding:10px 14px;margin-bottom:18px;color:#f0d488;font-size:13px}
+.warns:empty{display:none}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:16px}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:16px}
+.card h2{margin:0 0 4px;font-size:14px;text-transform:uppercase;letter-spacing:.5px}
+.role-sub{color:var(--mut);font-size:12px;margin-bottom:12px}
+label{display:block;font-size:12px;color:var(--mut);margin:10px 0 3px}
+input,select{width:100%;background:#0d1117;border:1px solid var(--bd);border-radius:6px;color:var(--fg);padding:7px 9px;font:13px inherit}
+.row{display:flex;gap:8px}.row>div{flex:1}
+.badge{display:inline-block;font-size:11px;padding:2px 7px;border-radius:10px;border:1px solid var(--bd);color:var(--mut);margin-left:6px}
+.keystat{font-size:11px;margin-top:4px}
+.btns{margin-top:14px;display:flex;gap:8px}
+button{background:var(--acc);border:0;border-radius:6px;color:#fff;padding:8px 14px;font:13px inherit;cursor:pointer}
+button.ghost{background:transparent;border:1px solid var(--bd);color:var(--fg)}button:disabled{opacity:.5}
+.test{margin-top:10px;font-size:12px;border-top:1px dashed var(--bd);padding-top:10px;min-height:18px}
+.dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:5px}
+.save-bar{position:sticky;bottom:0;margin-top:22px;padding:14px 0;display:flex;gap:12px;align-items:center;background:var(--bg)}
+.muted{color:var(--mut)}
+</style></head><body>
+<header><h1>&#129714; PatchWing</h1>
+<span class="tabs"><a class="tab" href="/">Home</a><a class="tab" href="/app#pipe">Pipeline</a><a class="tab" href="/app#feed">Feed</a><a class="tab" href="/templates">Templates</a><a class="tab active" href="/providers">Providers</a></span>
+<span class="muted" id="cfgpath" style="margin-left:auto;font-size:12px"></span>
+<span class="muted" id="whoami" style="margin-left:12px;font-size:12px"></span>
+<a class="tab" href="#" onclick="return signOut()" title="End session">Sign out</a></header>
+<script>
+async function signOut() {
+  try { await fetch("/api/logout", {method:"POST"}); } catch (_) {}
+  location.href = "/login";
+  return false;
+}
+fetch("/api/whoami").then(r => r.ok ? r.json() : {}).then(j => {
+  const el = document.getElementById("whoami");
+  if (el && j.user) el.textContent = "signed in as " + j.user.email;
+}).catch(() => {});
+</script>
+<div class="wrap"><div class="warns" id="warns"></div>
+<p class="muted" style="margin-top:0">Each role gets its own model &amp; endpoint. You can name an <b>environment variable</b> for the key, or paste the key to <b>store it in the local DB</b>. Stored keys are never shown back or written to the config file. Verify should be a different model family than patch.</p>
+<div class="grid" id="grid"></div>
+<div class="save-bar"><button id="saveBtn" onclick="saveAll()">Save all</button><span class="muted" id="saveMsg"></span></div>
+
+<h2 style="margin-top:32px">Cost ceiling <span class="muted" style="font-size:12px;font-weight:400">— per finding, across every seat</span></h2>
+<p class="muted" style="margin-top:0;font-size:13px">The only spend limit. Sums Kimi + GLM + any recursion for one finding; runner halts on breach.</p>
+<div style="background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:20px;max-width:820px;display:flex;gap:16px;align-items:end;flex-wrap:wrap">
+  <div style="flex:0 0 220px">
+    <label style="display:block;font-size:12px;color:var(--mut);margin-bottom:4px">Max USD per finding</label>
+    <div style="display:flex;align-items:center;gap:6px">
+      <span style="color:var(--mut);font-size:15px">$</span>
+      <input id="ceilUsd" type="number" step="0.01" min="0"
+             style="width:100%;background:#0d1117;border:1px solid var(--bd);color:var(--fg);padding:8px 10px;border-radius:6px;font-size:15px">
+    </div>
+    <div class="muted" style="font-size:11px;margin-top:4px">0 = disabled (unbounded). Human top-ups still allowed via API.</div>
+  </div>
+  <button id="saveCeilBtn" onclick="saveCeiling()" style="height:38px">Save ceiling</button>
+  <span class="muted" id="ceilMsg" style="font-size:12px"></span>
+  <div class="muted" id="ceilNote" style="font-size:11px;flex-basis:100%;margin-top:4px"></div>
+</div>
+
+<h2 style="margin-top:32px">Pipeline defaults</h2>
+<p class="muted" style="margin-top:0;font-size:13px">Controls how far a run iterates on a bug and how much the fix-writer sees. These are system defaults; a target's <code>[fix_writer]</code> and <code>[pipeline]</code> in TOML still overrides them.</p>
+<div id="pipecard" style="background:var(--panel);border:1px solid var(--bd);border-radius:12px;padding:20px;display:grid;grid-template-columns:1fr 1fr;gap:16px 24px;max-width:820px"></div>
+<div class="save-bar"><button id="savePipe" onclick="savePipeline()">Save pipeline defaults</button><span class="muted" id="pipeMsg"></span></div>
+
+<h2 style="margin-top:32px">System prompts</h2>
+<p class="muted" style="margin-top:0;font-size:13px">The exact instructions sent to each seat. Leave a field <b>empty</b> to use the built-in default (visible under &ldquo;show built-in&rdquo;). Every model call records the resolved prompt as an artifact you can inspect on the finding page.</p>
+<div id="promptscard" style="display:flex;flex-direction:column;gap:18px;max-width:820px"></div>
+<div class="save-bar"><button id="savePrompts" onclick="savePrompts()">Save prompts</button><span class="muted" id="promptsMsg"></span></div>
+</div>
+<script>
+const ROLE_HELP={detect:"optional - local vulnerability detector",patch:"the fixer - a strong code model",verify:"adversarial second opinion (different family)"};
+let PRESETS=[];
+function el(t,a={},...ch){const e=document.createElement(t);for(const k in a){if(k=="html")e.innerHTML=a[k];else e.setAttribute(k,a[k]);}ch.forEach(c=>e.append(c));return e;}
+function dot(col,txt){const s=el('span');s.append(el('span',{class:'dot',style:'background:'+col}),txt);return s;}
+async function load(){
+ const d=await (await fetch('/api/config')).json();
+ PRESETS=d.presets||[];
+ document.getElementById('cfgpath').textContent=d.config_path?('config file: '+d.config_path+' (+ DB)'):'DB config';
+ document.getElementById('warns').innerHTML=(d.warnings||[]).map(w=>'&#9888; '+w).join('<br>');
+ const g=document.getElementById('grid');g.innerHTML='';
+ (d.roles||[]).forEach(r=>g.append(card(r,d.models[r])));
+ const cc = d.cost_ceiling || {};
+ const usdEl = document.getElementById('ceilUsd');
+ if (usdEl) usdEl.value = cc.max_usd ?? '';
+ const noteEl = document.getElementById('ceilNote');
+ if (noteEl) noteEl.textContent =
+   `Default is $${(cc.default_usd ?? 5).toFixed(2)}. This applies per finding across every seat (patch + verify + any recursion) — not per model.`;
+}
+function card(role,m){m=m||{};const c=el('div',{class:'card','data-role':role});
+ const h=el('h2',{},role);if(m.family)h.append(el('span',{class:'badge'},m.family));c.append(h);
+ c.append(el('div',{class:'role-sub'},ROLE_HELP[role]||''));
+ const sel=el('select',{});sel.append(el('option',{value:''},'- provider preset -'));
+ PRESETS.forEach(p=>sel.append(el('option',{value:p.id},p.label)));
+ sel.onchange=()=>{const p=PRESETS.find(x=>x.id==sel.value);if(!p)return;
+   c.querySelector('.endpoint').value=p.endpoint;if(p.model)c.querySelector('.model').value=p.model;c.querySelector('.keyenv').value=p.key_env;};
+ c.append(el('label',{},'Provider'),sel);
+ c.append(el('label',{},'API endpoint (base URL)'),el('input',{class:'endpoint',value:m.endpoint||'',placeholder:'https://api.provider.com/v1'}));
+ c.append(el('label',{},'Model id'),el('input',{class:'model',value:m.model||'',placeholder:'org/model-name'}));
+ const kr=el('div',{class:'row'});
+ const kd=el('div');kd.append(el('label',{},'Key env var (optional)'),el('input',{class:'keyenv',value:m.api_key_env||'',placeholder:'PATCHWING_PATCH_KEY'}));
+ const pd=el('div');pd.append(el('label',{},'or paste key -> store in DB'),el('input',{class:'apikey',type:'password',value:'',placeholder:m.api_key_stored?'\u2022\u2022\u2022\u2022 stored (blank=keep)':'paste key'}));
+ kr.append(kd,pd);c.append(kr);
+ const ks=el('div',{class:'keystat'});
+ ks.append(m.api_key_set?dot('var(--ok)',m.api_key_hint||'key set'):dot('var(--mut)','no key (ok for local)'));
+ c.append(ks);
+ const r2=el('div',{class:'row'});
+ // Max tokens intentionally not exposed: we omit the OpenAI max_tokens param
+ // client-side so the model can generate as much as the server allows; the
+ // per-finding $ ceiling is the only spend limit. If the server truncates a
+ // response (finish_reason=length), models.py raises — we never accept a
+ // silently-cut reply.
+ [['temp','Temp',m.temperature??0.2],['to','Timeout',m.timeout_s??300]].forEach(f=>{
+   const d=el('div');d.append(el('label',{},f[1]),el('input',{class:f[0],value:f[2]}));r2.append(d);});
+ c.append(r2);
+ const b=el('div',{class:'btns'});const tb=el('button',{class:'ghost'},'Test (preflight)');tb.onclick=()=>test(role,c,tb);b.append(tb);c.append(b);
+ c.append(el('div',{class:'test',id:'test-'+role}));return c;
+}
+function readCard(c){const o={endpoint:c.querySelector('.endpoint').value.trim(),model:c.querySelector('.model').value.trim(),
+ api_key_env:c.querySelector('.keyenv').value.trim(),temperature:c.querySelector('.temp').value,
+ max_tokens:0,timeout_s:c.querySelector('.to').value};
+ const k=c.querySelector('.apikey').value.trim(); if(k) o.api_key=k; return o;}
+async function test(role,c,btn){const t=document.getElementById('test-'+role);t.textContent='testing (may take ~20-60s)...';btn.disabled=true;
+ try{const d=await (await fetch('/api/preflight',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(Object.assign({role},readCard(c)))})).json();
+  t.innerHTML='';
+  if(d.error){t.append(dot('var(--err)','error: '+d.error));}
+  else{t.append(dot(d.reachable?'var(--ok)':'var(--err)','reachable='+d.reachable+'  '),
+    dot(d.json_ok?'var(--ok)':'var(--warn)','json='+d.json_ok+'  '),
+    dot(d.security_ok?'var(--ok)':'var(--err)','security='+d.security_ok),
+    el('div',{class:'muted'},'latency '+(d.latency_s??'?')+'s'+(d.notes&&d.notes.length?(' - '+d.notes.join('; ')):'')));}
+ }catch(e){t.textContent='request failed: '+e;}btn.disabled=false;
+}
+async function saveAll(){const models={};document.querySelectorAll('.card').forEach(c=>{models[c.dataset.role]=readCard(c);});
+ const sb=document.getElementById('saveBtn'),msg=document.getElementById('saveMsg');sb.disabled=true;msg.textContent='saving...';
+ try{const d=await (await fetch('/api/config',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({models})})).json();
+  msg.textContent=d.error?('error: '+d.error):'saved to DB';if(!d.error)await load();
+ }catch(e){msg.textContent='failed: '+e;}sb.disabled=false;setTimeout(()=>msg.textContent='',5000);
+}
+async function saveCeiling(){
+ const btn=document.getElementById('saveCeilBtn'),msg=document.getElementById('ceilMsg');
+ const usd = parseFloat(document.getElementById('ceilUsd').value);
+ if (!isFinite(usd) || usd < 0){msg.textContent='invalid amount';return;}
+ btn.disabled=true; msg.textContent='saving...';
+ try {
+  // max_tokens = 0 keeps the token ceiling disabled (we retired token-based
+  // limits — USD is the only spend gate). Backend honors both fields.
+  const d = await (await fetch('/api/config',{method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({cost_ceiling:{max_tokens:0, max_usd:usd}})})).json();
+  msg.textContent = d.error ? ('error: '+d.error) : `saved: $${usd.toFixed(2)}/finding`;
+  if (!d.error) await load();
+ } catch (e) { msg.textContent='failed: '+e; }
+ btn.disabled=false; setTimeout(()=>msg.textContent='',5000);
+}
+// ---- pipeline defaults --------------------------------------------------
+async function loadPipeline(){
+  const r = await fetch('/api/pipeline_settings');
+  if (!r.ok) return;
+  const j = await r.json();
+  const s = j.settings || {}, schema = j.schema || {};
+  const card = document.getElementById('pipecard');
+  card.innerHTML = '';
+  const F = (label, k, input) => {
+    const wrap = document.createElement('div');
+    wrap.innerHTML = `<label style="font-size:13px;color:var(--mut)">${label}</label>`;
+    input.dataset.k = k;
+    input.className = 'pipeInput';
+    input.style.cssText = 'width:100%;margin-top:4px;background:#0d1117;border:1px solid var(--bd);color:var(--fg);padding:8px 10px;border-radius:6px';
+    wrap.appendChild(input);
+    return wrap;
+  };
+  const num = (k, val, hint) => {
+    const i = document.createElement('input'); i.type='number'; i.value=val;
+    const w = F(k.replace(/_/g,' '), k, i);
+    if (hint) w.appendChild(Object.assign(document.createElement('div'),
+      {className:'muted', textContent:hint, style:'font-size:11px;margin-top:3px'}));
+    return w;
+  };
+  const sel = (k, val, opts, hint) => {
+    const s = document.createElement('select'); opts.forEach(o=>{
+      const op=document.createElement('option'); op.value=o; op.textContent=o;
+      if (o===val) op.selected=true; s.appendChild(op);
+    });
+    const w = F(k.replace(/_/g,' '), k, s);
+    if (hint) w.appendChild(Object.assign(document.createElement('div'),
+      {className:'muted', textContent:hint, style:'font-size:11px;margin-top:3px'}));
+    return w;
+  };
+  const bool = (k, val, hint) => {
+    const s = document.createElement('select');
+    ['true','false'].forEach(o=>{const op=document.createElement('option');
+      op.value=o; op.textContent=o;
+      if ((o==='true')===!!val) op.selected=true; s.appendChild(op);});
+    const w = F(k.replace(/_/g,' '), k, s);
+    if (hint) w.appendChild(Object.assign(document.createElement('div'),
+      {className:'muted', textContent:hint, style:'font-size:11px;margin-top:3px'}));
+    return w;
+  };
+  card.appendChild(num('max_iterations', s.max_iterations,
+    '0 = no auto-iterate. After max, user must click iterate-once-more.'));
+  card.appendChild(sel('iteration_mode', s.iteration_mode,
+    ['bounded','after_each'],
+    'bounded = run to cap. after_each = pause for user click after every verify.'));
+  card.appendChild(num('context_max_bytes', s.context_max_bytes,
+    '0 = unlimited. Cap total bytes of trace-derived context files sent to the fix-writer.'));
+  card.appendChild(bool('include_context', s.include_context,
+    'false = send only the primary file. Useful for tiny-context models.'));
+  card.appendChild(sel('fix_writer_view', s.fix_writer_view,
+    ['window','whole_file'],
+    'window = +/-70 lines around anchors. whole_file = the entire source, unabridged.'));
+}
+async function savePipeline(){
+  const payload = {};
+  document.querySelectorAll('.pipeInput').forEach(el=>{
+    payload[el.dataset.k] = el.value;
+  });
+  const btn = document.getElementById('savePipe'),
+        msg = document.getElementById('pipeMsg');
+  btn.disabled = true; msg.textContent = 'saving...';
+  try {
+    const r = await fetch('/api/pipeline_settings',
+      {method:'POST',headers:{'Content-Type':'application/json'},
+       body:JSON.stringify(payload)});
+    const j = await r.json();
+    msg.textContent = j.ok ? 'saved to DB' : ('error: ' + (j.error || 'unknown'));
+    if (j.ok) await loadPipeline();
+  } catch (e) { msg.textContent = 'failed: ' + e; }
+  btn.disabled = false; setTimeout(()=>msg.textContent='', 5000);
+}
+
+// ---- system prompts ------------------------------------------------------
+async function loadPrompts(){
+  const r = await fetch('/api/prompts');
+  if (!r.ok) return;
+  const j = await r.json();
+  const card = document.getElementById('promptscard');
+  card.innerHTML = '';
+  (j.prompts || []).forEach(p => {
+    const box = document.createElement('div');
+    box.style.cssText = 'background:var(--panel);border:1px solid var(--bd);border-radius:12px;padding:16px 20px';
+    const overridden = !!p.override;
+    box.innerHTML = `
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">
+        <b style="font-size:14px">${p.name}</b>
+        <span class="muted" style="font-size:12px">${p.description}</span>
+        <span style="margin-left:auto;font-size:11px;padding:2px 8px;border-radius:8px;background:${overridden?'#2d3f2d':'#2a2f37'};color:${overridden?'#8fda8f':'var(--mut)'}">
+          ${overridden ? 'OVERRIDDEN' : 'built-in default'}
+        </span>
+      </div>
+      <textarea data-name="${p.name}" class="promptInput" rows="8" style="width:100%;background:#0d1117;border:1px solid var(--bd);color:var(--fg);padding:8px 10px;border-radius:6px;font-family:var(--mono),ui-monospace,Consolas,monospace;font-size:12px;resize:vertical"
+        placeholder="(empty = use built-in default)">${p.override ? p.override.replace(/</g,'&lt;') : ''}</textarea>
+      <details style="margin-top:8px"><summary style="cursor:pointer;color:var(--mut);font-size:12px">show built-in (${p.builtin_bytes} bytes)</summary>
+        <pre style="background:#0d1117;padding:10px;border-radius:6px;font-size:11px;margin:6px 0 0;max-height:220px;overflow:auto">${p.builtin.replace(/</g,'&lt;')}</pre>
+      </details>`;
+    card.appendChild(box);
+  });
+}
+async function savePrompts(){
+  const overrides = {};
+  document.querySelectorAll('.promptInput').forEach(t => {
+    overrides[t.dataset.name] = t.value;
+  });
+  const btn = document.getElementById('savePrompts'),
+        msg = document.getElementById('promptsMsg');
+  btn.disabled = true; msg.textContent = 'saving...';
+  try {
+    const r = await fetch('/api/prompts',
+      {method:'POST',headers:{'Content-Type':'application/json'},
+       body:JSON.stringify({overrides})});
+    const j = await r.json();
+    msg.textContent = j.ok ? 'saved to DB' : ('error: ' + (j.error || 'unknown'));
+    if (j.ok) await loadPrompts();
+  } catch (e) { msg.textContent = 'failed: ' + e; }
+  btn.disabled = false; setTimeout(()=>msg.textContent='', 5000);
+}
+
+load();
+loadPipeline();
+loadPrompts();
+</script></body></html>

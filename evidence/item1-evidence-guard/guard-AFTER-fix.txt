@@ -1,0 +1,10 @@
+test_every_post_execution_path_attaches_evidence (test_evidence_coverage.EvidenceCoverageTest.test_every_post_execution_path_attaches_evidence) ... ok
+test_rejections_and_failures_after_execution_are_covered (test_evidence_coverage.EvidenceCoverageTest.test_rejections_and_failures_after_execution_are_covered)
+Stated separately from the general rule because it is the claim that ... ok
+test_the_scanner_sees_execution (test_evidence_coverage.EvidenceCoverageTest.test_the_scanner_sees_execution)
+If nothing were ever classified post-execution the guard below would ... ok
+
+----------------------------------------------------------------------
+Ran 3 tests in 0.061s
+
+OK

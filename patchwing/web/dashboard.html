@@ -1,0 +1,886 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PatchWing</title>
+<style>
+  :root {
+    --bg:#0d1117; --panel:#161b22; --panel2:#1c2330; --border:#30363d;
+    --text:#e6edf3; --dim:#8b949e; --accent:#3fb950; --accent2:#58a6ff;
+    --warn:#d29922; --bad:#f85149; --add:#2ea043; --del:#da3633;
+    --mono:"SF Mono",ui-monospace,"Cascadia Code",Consolas,monospace;
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--text);
+    font:14px/1.5 -apple-system,Segoe UI,Roboto,sans-serif; }
+  header { display:flex; align-items:center; gap:14px; padding:14px 20px;
+    border-bottom:1px solid var(--border); background:var(--panel); }
+  header h1 { margin:0; font-size:18px; font-weight:600; letter-spacing:.3px; }
+  header .bug { color:var(--accent); }
+  header .sub { color:var(--dim); font-size:12px; }
+  header .spacer { flex:1; }
+  button { font:inherit; cursor:pointer; border:1px solid var(--border);
+    background:var(--panel2); color:var(--text); padding:7px 14px;
+    border-radius:6px; }
+  button:hover { border-color:var(--accent2); }
+  button.primary { background:var(--accent); color:#04240f; border-color:transparent;
+    font-weight:600; }
+  button.primary:disabled { opacity:.5; cursor:default; }
+  button.mini { padding:3px 9px; font-size:12px; }
+  .wrap { display:grid; grid-template-columns:minmax(340px,420px) 1fr;
+    gap:0; height:calc(100vh - 56px); }
+  .list { border-right:1px solid var(--border); overflow-y:auto; }
+  .detail { overflow-y:auto; padding:20px; }
+  .card { padding:12px 16px; border-bottom:1px solid var(--border); cursor:pointer; }
+  .card:hover { background:var(--panel); }
+  .card.sel { background:var(--panel2); border-left:3px solid var(--accent2); }
+  .card .t { font-weight:600; margin-bottom:5px; }
+  .card .meta { color:var(--dim); font-size:12px; display:flex; gap:8px;
+    flex-wrap:wrap; align-items:center; }
+  .pill { font-size:11px; padding:1px 8px; border-radius:20px; font-weight:600;
+    text-transform:uppercase; letter-spacing:.4px; }
+  .s-done{background:#1a3a24;color:var(--accent);}
+  .s-blocked{background:#3a2f10;color:var(--warn);}
+  .s-pending_signoff{background:#0f3a2a;color:var(--accent);}
+  .s-arvo{background:#1a2a3a;color:#7bb1e8;}
+  .s-rejected{background:#3a1c1c;color:var(--bad);}
+  .s-failed{background:#3a1c1c;color:var(--bad);}
+  .s-pending{background:#20262e;color:var(--dim);}
+  .s-running{background:#12314d;color:var(--accent2);}
+  .track { display:flex; gap:3px; margin-top:8px; }
+  .seg { flex:1; height:5px; border-radius:3px; background:#20262e; }
+  .seg.done { background:var(--accent); }
+  .seg.here { background:var(--accent2); }
+  .seg.bad { background:var(--bad); }
+  h2 { font-size:15px; margin:22px 0 10px; color:var(--dim);
+    text-transform:uppercase; letter-spacing:.5px; font-weight:600; }
+  .kv { color:var(--dim); font-size:13px; margin:2px 0; }
+  .kv b { color:var(--text); font-weight:600; }
+  pre { background:#0a0e14; border:1px solid var(--border); border-radius:8px;
+    padding:14px; overflow-x:auto; font-family:var(--mono); font-size:12.5px;
+    line-height:1.55; }
+  .diff .a { color:var(--add); } .diff .d { color:var(--del); }
+  .diff .h { color:var(--accent2); } .diff .c { color:var(--dim); }
+  .log { max-height:340px; overflow-y:auto; }
+  .log .ev { display:grid; grid-template-columns:88px 74px 60px 1fr; gap:8px;
+    padding:3px 0; border-bottom:1px solid #1a1f27; font-family:var(--mono);
+    font-size:12px; }
+  .log .st { color:var(--accent2); }
+  .log .ok{color:var(--accent);} .log .blocked{color:var(--warn);}
+  .log .reject,.log .fail,.log .error{color:var(--bad);}
+  .log .event{color:var(--dim);}    /* substep events are quieter than outcomes */
+  .log .kind{color:var(--accent2);font-weight:600;}
+  .log .dur { color:var(--dim); text-align:right; }
+  .log .meta { grid-column: 3 / 5; margin-left:0; margin-top:3px;
+               border-left:2px solid #2a2f37; padding:2px 8px;
+               white-space:pre-wrap; word-break:break-all;
+               background:#0f1216; color:#c9d1d9; font-size:11px;
+               border-radius:0 4px 4px 0; }
+  .log details summary { cursor:pointer; }
+  .empty { color:var(--dim); padding:40px; text-align:center; }
+  .dot { width:8px; height:8px; border-radius:50%; background:var(--dim);
+    display:inline-block; }
+  .dot.live { background:var(--accent); box-shadow:0 0 8px var(--accent);
+    animation:pulse 1.2s infinite; }
+  @keyframes pulse { 50%{opacity:.4;} }
+  .actions { display:flex; gap:8px; margin:8px 0 4px; }
+  .tabs { display:flex; gap:4px; margin-left:8px; }
+  .tab { background:transparent; border:1px solid transparent; color:var(--dim);
+    padding:5px 14px; border-radius:6px; text-decoration:none; }
+  .tab.active { background:var(--panel2); color:var(--text); border-color:var(--border); }
+  .filters { display:flex; align-items:center; gap:8px; flex-wrap:wrap;
+    padding:12px 20px; border-bottom:1px solid var(--border); background:var(--panel); }
+  .chip { font-size:12.5px; padding:5px 12px; border-radius:20px;
+    border:1px solid var(--border); background:var(--panel2); color:var(--dim); }
+  .chip.on { background:#14340f; color:var(--accent); border-color:var(--accent); }
+  .chip.cat.on { background:#12314d; color:var(--accent2); border-color:var(--accent2); }
+  .sep { width:1px; height:20px; background:var(--border); margin:0 4px; }
+  #search { background:var(--panel2); border:1px solid var(--border); color:var(--text);
+    padding:6px 12px; border-radius:6px; font:inherit; width:240px; }
+  .feedlist { overflow-y:auto; height:calc(100vh - 56px - 51px); }
+  .arow { display:grid; grid-template-columns:118px 50px 110px 64px 1fr 104px;
+    gap:12px; align-items:center; padding:9px 20px; border-bottom:1px solid #1a1f27;
+    font-size:13px; }
+  .arow:hover { background:var(--panel); }
+  .arow.nosrc { opacity:.55; }
+  .arow.mal { background:rgba(248,81,73,.055); }
+  .arow .cve { font-family:var(--mono); color:var(--accent2); font-size:12px; }
+  .arow .epss { font-family:var(--mono); }
+  .epss-hi { color:var(--bad); } .epss-mid { color:var(--warn); } .epss-lo { color:var(--dim); }
+  .cattag { font-size:11px; padding:1px 7px; border-radius:4px; background:#20262e;
+    color:var(--dim); text-transform:uppercase; letter-spacing:.3px; }
+  .cattag.oss { background:#12314d; color:var(--accent2); }
+  .fx { font-size:11px; padding:2px 8px; border-radius:5px; font-weight:600;
+    text-align:center; letter-spacing:.2px; white-space:nowrap; }
+  .fx-yes { background:#14340f; color:var(--accent); }
+  .fx-no  { background:#20262e; color:var(--dim); }
+  .fx-mal { background:#3a1c1c; color:var(--bad); }
+  .fx-maybe { background:#3a2f10; color:var(--warn); }
+  .arow .title { color:var(--text); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .arow .title .fixv { color:var(--dim); font-family:var(--mono); font-size:11px; }
+  .arow .fire { color:var(--bad); }
+  .promote { justify-self:end; }
+  .promote:disabled { opacity:.4; }
+  .feedhdr { display:grid; grid-template-columns:118px 50px 110px 64px 1fr 104px;
+    gap:12px; padding:7px 20px; border-bottom:1px solid var(--border);
+    color:var(--dim); font-size:11px; text-transform:uppercase; letter-spacing:.5px;
+    position:sticky; top:0; background:var(--bg); }
+</style>
+</head>
+<body>
+<header>
+  <h1><span class="bug">🐛</span> PatchWing</h1>
+  <span class="tabs">
+    <a class="tab" href="/">Home</a>
+    <button class="tab" id="tab-feed" onclick="showTab('feed')">Feed</button>
+    <button class="tab active" id="tab-pipe" onclick="showTab('pipe')">Pipeline</button>
+    <a class="tab" href="/templates">Templates</a>
+    <a class="tab" href="/providers">Providers</a>
+  </span>
+  <span class="spacer"></span>
+  <span class="dot" id="livedot"></span>
+  <span class="sub" id="runstatus">idle</span>
+  <button class="primary" id="runbtn" onclick="runAll()">▶ Run pipeline</button>
+  <span class="sub" id="whoami" style="margin-left:12px"></span>
+  <button class="tab" onclick="signOut()" title="End session">Sign out</button>
+</header>
+
+<!-- PIPELINE VIEW -->
+<div class="wrap" id="view-pipe">
+  <div class="list" id="list"><div class="empty">loading…</div></div>
+  <div class="detail" id="detail"><div class="empty">Select a finding.</div></div>
+</div>
+
+<!-- FEED VIEW -->
+<div id="view-feed" style="display:none">
+  <div class="filters" id="filters">
+    <button class="chip on" data-f="exploited" onclick="toggleChip(this)">🔥 Exploited (KEV)</button>
+    <button class="chip" data-f="feed_class" data-v="production" onclick="toggleChip(this)">💀 Zero-Day</button>
+    <button class="chip" data-f="feed_class" data-v="candidate" onclick="toggleChip(this)">🧪 Candidate</button>
+    <button class="chip" data-f="ransomware" onclick="toggleChip(this)">💀 Ransomware</button>
+    <span class="sep"></span>
+    <button class="chip cat" data-cat="" onclick="setCat(this,'')">all platforms</button>
+    <button class="chip cat" data-cat="oss" onclick="setCat(this,'oss')">oss</button>
+    <button class="chip cat" data-cat="windows" onclick="setCat(this,'windows')">windows</button>
+    <button class="chip cat" data-cat="linux" onclick="setCat(this,'linux')">linux</button>
+    <button class="chip cat" data-cat="network" onclick="setCat(this,'network')">network</button>
+    <button class="chip cat" data-cat="apple" onclick="setCat(this,'apple')">apple</button>
+    <button class="chip cat" data-cat="app" onclick="setCat(this,'app')">app</button>
+    <span class="sep"></span>
+    <input id="search" placeholder="search cve / product / package…" oninput="loadFeed()">
+    <span class="spacer"></span>
+    <span class="sub" id="feedmeta"></span>
+    <button class="mini" id="pullbtn" onclick="pullFeed()">⟳ Pull feeds</button>
+  </div>
+  <div class="feedlist" id="feedlist"><div class="empty">loading…</div></div>
+</div>
+
+<script>
+const STAGE_ORDER = ["ingest","localize","provision","reproduce","patch","verify","package","review"];
+let sel = null, lastEvent = 0, pollTimer = null;
+
+async function api(path, opts) {
+  const r = await fetch(path, opts);
+  return r.json();
+}
+
+function pill(state){
+  // Prettier labels for compound state names — the raw DB string is fine
+  // for grep but reads poorly in a badge. Also keep .s-<state> class so the
+  // CSS still matches.
+  const labels = {"pending_signoff": "pending signoff"};
+  const label = labels[state] || state;
+  return `<span class="pill s-${state}">${label}</span>`;
+}
+
+function spendChip(b){
+  // Prominent, always-visible running cost. Sits next to the finding title
+  // and re-renders on every detail poll — the number ticks up in real time
+  // as spend rows land during a run. Color darkens as we approach the
+  // ceiling; goes red past 80%.
+  if (!b) return "";
+  const usd = b.lifetime_usd ?? b.usd ?? 0;
+  const calls = b.lifetime_calls ?? b.calls ?? 0;
+  const priced = b.lifetime_priced ?? b.priced ?? true;
+  const unpriced = b.lifetime_unpriced_calls ?? 0;
+  const maxUsd = b.max_usd || 0;
+  const pct = maxUsd ? Math.min(100, Math.round(100 * usd / maxUsd)) : 0;
+  const color = pct > 80 ? "var(--bad)" : pct > 50 ? "var(--warn,#c88400)" : "var(--good,#1a7f37)";
+  const prefix = (priced && unpriced === 0) ? "$" : "~$";
+  const suffix = maxUsd ? ` / $${maxUsd.toFixed(2)}` : "";
+  const title = (!priced && unpriced > 0)
+    ? `${unpriced} call(s) had no price in model_config.extra — set price_in_per_1m/price_out_per_1m in /providers to make this exact`
+    : `${calls} model call(s) so far`;
+  return `<span title="${title}" style="display:inline-flex;align-items:center;gap:6px;font-size:16px;font-weight:600;padding:4px 10px;border-radius:6px;background:${color}22;color:${color};border:1px solid ${color}55">
+    <span>${prefix}${usd.toFixed(4)}</span>${suffix}
+    <span style="font-weight:400;font-size:12px;opacity:0.85">· ${calls} call${calls===1?"":"s"}</span>
+  </span>`;
+}
+
+function budgetLine(b){
+  // Total lifetime spend for this finding — sum of spend + spend_prior across
+  // this finding and every descendant child (spawned via different_bug
+  // recursion). This is the number that matters for economics. Progress bar
+  // is against the per-attempt ceiling for context.
+  //
+  // USD honesty: if any single call in the sum was unpriced (model not in the
+  // price map), show "~$X (partial — N call(s) unpriced)" rather than a
+  // clean $X that would visually lie. Matches the string style in the
+  // evidence bundle §8b.
+  if (!b) return "";
+  const fmt = n => n.toLocaleString();
+  const tokens = b.lifetime_tokens ?? b.tokens ?? 0;
+  const usd = b.lifetime_usd ?? b.usd ?? 0;
+  const calls = b.lifetime_calls ?? b.calls ?? 0;
+  const priced = b.lifetime_priced ?? b.priced ?? true;
+  const unpriced = b.lifetime_unpriced_calls ?? 0;
+  const maxTok = b.max_tokens || 0;
+  const maxUsd = b.max_usd || 0;
+  const tokPct = maxTok ? Math.min(100, Math.round(100 * tokens / maxTok)) : 0;
+  let usdPart = "";
+  if (!priced && unpriced > 0) {
+    usdPart = ` &nbsp;·&nbsp; ~$${usd.toFixed(2)} (partial — ${unpriced} call(s) unpriced)`;
+  } else if (priced && maxUsd) {
+    usdPart = ` &nbsp;·&nbsp; $${usd.toFixed(2)}/${maxUsd.toFixed(2)}`;
+  } else if (usd > 0) {
+    usdPart = ` &nbsp;·&nbsp; $${usd.toFixed(2)}`;
+  }
+  const bar = maxTok
+    ? ` <span style="display:inline-block;width:120px;height:6px;vertical-align:middle;background:#e5e7eb;border-radius:3px;margin-left:6px"><span style="display:block;height:6px;width:${tokPct}%;background:${tokPct>80?"var(--bad)":"var(--accent2)"};border-radius:3px"></span></span>`
+    : "";
+  return `<div class="kv" style="font-size:12px;color:var(--dim)"><b>total lifetime:</b> ${fmt(tokens)}${maxTok?` / ${fmt(maxTok)}`:""} tokens in ${calls} call(s)${usdPart}${bar}</div>`;
+}
+
+function track(f){
+  let segs = STAGE_ORDER.map((s,i)=>{
+    let cls = "seg";
+    if (f.state==="rejected"||f.state==="failed"){ if(i<f.stage_index)cls+=" done"; else if(i===f.stage_index)cls+=" bad"; }
+    else if (f.state==="done"){ cls+=" done"; }
+    else { if(i<f.stage_index)cls+=" done"; else if(i===f.stage_index)cls+=" here"; }
+    return `<div class="${cls}" title="${s}"></div>`;
+  }).join("");
+  return `<div class="track">${segs}</div>`;
+}
+
+async function refresh(){
+  const st = await api("/api/state");
+  const live = st.run_active;
+  document.getElementById("livedot").className = "dot" + (live?" live":"");
+  document.getElementById("runstatus").textContent = live ? "running…" : "idle";
+  document.getElementById("runbtn").disabled = live;
+
+  const list = document.getElementById("list");
+  if (!st.findings.length){ list.innerHTML = `<div class="empty">No findings.<br>Add one with the CLI.</div>`; }
+  else {
+    list.innerHTML = st.findings.map(f=>`
+      <div class="card ${f.id===sel?"sel":""}" onclick="select('${f.id}')">
+        <div class="t">${esc(f.title)}</div>
+        <div class="meta">${pill(f.state)}
+          <span>${f.cwe||""}</span>
+          <span>stage: ${f.stage}</span>
+          <span>${f.source_ref||f.source}</span></div>
+        ${track(f)}
+      </div>`).join("");
+  }
+  if (sel) refreshDetail();
+  // Poll fast while a run is active, slowly when idle.
+  schedule(live ? 900 : 3000);
+}
+
+function schedule(ms){ clearTimeout(pollTimer); pollTimer = setTimeout(refresh, ms); }
+
+async function signOut() {
+  try { await fetch("/api/logout", {method:"POST"}); } catch (_) {}
+  location.href = "/login";
+}
+
+fetch("/api/whoami").then(r => r.ok ? r.json() : {}).then(j => {
+  const el = document.getElementById("whoami");
+  if (el && j.user) el.textContent = "signed in as " + j.user.email;
+}).catch(() => {});
+
+// UI state that must survive the 2s poll-refresh (which does el.innerHTML=…
+// on the detail column). Without these, expanding "show detail" or watching
+// the elapsed timer feels broken — the poll wipes user state every 2s.
+const openDetails = new Set();      // event-artifact ids the user opened
+let selectedFindingUpdatedAt = 0;   // for the elapsed timer
+let elapsedTimer = null;
+
+async function select(id){ sel = id; lastEvent = 0; openDetails.clear();
+  document.getElementById("detail").innerHTML=""; refresh(); }
+
+async function refreshDetail(){
+  const d = await api(`/api/finding/${sel}`);
+  if (d.not_found){ return; }
+  const el = document.getElementById("detail");
+  // Track stage-start time for the live elapsed timer.
+  selectedFindingUpdatedAt = d.updated_at || 0;
+  window.__selectedFinding = d;
+  const artRows = d.artifacts.map(a=>`<span class="kv"><b>${a.kind}</b> ${a.bytes}b ${a.model?("· "+a.model):""}</span>`).join(" &nbsp; ");
+  const events = d.events.map(evLine).join("");
+  el.innerHTML = `
+    <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+      <h1 style="font-size:18px;margin:0">${esc(d.title||d.id)}</h1>${pill(d.state)}${spendChip(d.budget)}
+    </div>
+    <div class="actions">
+      ${d.stage==="review"
+        ? (d.state === "done"
+            ? `<span class="pill s-done" title="Signed off by operator">✓ signed off</span>`
+            : `<button class="mini" onclick="signoff('${d.id}')" title="Human sign-off: mark this finding done. Only shown at the review stage.">✓ Sign off (mark done)</button>`)
+        : `<button class="mini" onclick="runOne('${d.id}')" ${d.state==="done"?"disabled":""}>▶ advance this</button>`}
+      ${iterateButton(d)}
+      ${d.stage==="review"?`<button class="mini" onclick="downloadBundle('${d.id}')" title="Portable evidence bundle: manifest + diff + reproducer + hashes">⬇ Download evidence bundle</button>`:""}
+      ${arvoCommentaryBadge(d)}
+      ${arvoCompareButton(d)}
+    </div>
+    <div class="kv"><b>CWE:</b> ${d.cwe||"—"} &nbsp; <b>ref:</b> ${d.source_ref||"—"} &nbsp; <b>stage:</b> ${d.stage}</div>
+    ${budgetLine(d.budget)}
+    <div class="kv">${esc(d.description||"")}</div>
+    ${d.error?`<div class="kv" style="color:var(--bad)"><b>error:</b> ${esc(d.error)}</div>`:""}
+
+    <h2>Process log <span id="elapsed" style="font-size:12px;font-weight:400;color:var(--dim);margin-left:8px"></span></h2>
+    <div class="log" id="log">${events||'<div class="empty">no events</div>'}</div>
+
+    ${draftSpecEditorSection(d)}
+    ${d.reference_patch?`<h2>Upstream reference fix ${d.reference_patch.commit_url?`<a href="${d.reference_patch.commit_url}" target="_blank" style="font-size:12px;color:var(--accent2)">↗ commit</a>`:""}</h2>
+      <div class="kv">${esc((d.reference_patch.message||"").split("\\n")[0])}</div>
+      <pre class="diff">${diffHtml(d.reference_patch.patch)}</pre>`:""}
+    ${d.diff?`<h2>Proposed fix (PatchWing)</h2><pre class="diff">${diffHtml(d.diff)}</pre>`:""}
+    ${promptsHtml(d.prompts)}
+    ${artRows?`<h2>Artifacts</h2><div>${artRows}</div>`:""}
+    ${d.evidence?`<h2>Evidence bundle</h2><pre>${esc(d.evidence)}</pre>`:""}
+  `;
+  const log = document.getElementById("log");
+  if (log) log.scrollTop = log.scrollHeight;
+
+  // Draft-spec editor prefill — the editor renders empty inputs; a
+  // separate async fetch fills them if a draft exists. Skipped when the
+  // section isn't rendered (i.e. wrong stage or ARVO source).
+  if (document.getElementById("ds_rules")) loadDraftSpec(d.id);
+
+  // Restore expanded-detail state that the innerHTML= wiped.
+  openDetails.forEach(id => {
+    const d2 = document.getElementById(id);
+    if (d2) d2.open = true;
+  });
+  // Track opens/closes on any <details id="..."> in the detail pane going
+  // forward — log events, prompts, and anything else that opts in with an id.
+  document.querySelectorAll("#detail details[id]").forEach(d2 => {
+    d2.addEventListener("toggle", () => {
+      if (d2.open) openDetails.add(d2.id);
+      else openDetails.delete(d2.id);
+    });
+  });
+
+  // Elapsed timer: only ticks while a stage is running. Otherwise blank.
+  clearInterval(elapsedTimer);
+  const running = d.state === "running";
+  const tick = () => {
+    const el2 = document.getElementById("elapsed");
+    if (!el2) return;
+    if (!running) { el2.textContent = ""; return; }
+    const s = Math.max(0, Math.floor(Date.now()/1000 - selectedFindingUpdatedAt));
+    const mm = String(Math.floor(s/60)).padStart(2, "0");
+    const ss = String(s % 60).padStart(2, "0");
+    el2.textContent = `· ${d.stage} · running · ${mm}:${ss} elapsed`;
+  };
+  tick();
+  if (running) elapsedTimer = setInterval(tick, 1000);
+}
+
+function evLine(e){
+  // Two shapes: coarse outcomes (status = ok/retry/reject/fail/created/blocked/
+  // error) and substep events (status="event", kind = pod_ready, four_state,
+  // prompt_assembled, ...). Substeps get a distinct look and an expandable
+  // meta panel — the "in what order does everything happen" story lives here.
+  const dur = e.duration_s? e.duration_s.toFixed(2)+"s":"";
+  const label = (e.status === "event") ? (e.kind || "step") : e.status;
+  const cls   = (e.status === "event") ? "event" : e.status;
+  const metaBlock = (e.meta && typeof e.meta === "object" && Object.keys(e.meta).length)
+    ? `<details class="meta" id="ev_${e.id}"><summary style="color:var(--dim);font-size:11px">show detail</summary><pre style="margin:6px 0 0;font-size:11px">${esc(JSON.stringify(e.meta, null, 2))}</pre></details>`
+    : "";
+  return `<div class="ev"><span class="st">${e.stage}</span>
+    <span class="${cls} kind">${esc(label)}</span>
+    <span class="dur">${dur}</span>
+    <span>${esc(e.message||"")}${metaBlock}</span></div>`;
+}
+
+function iterateButton(d) {
+  // Only offered when the last outcome carries new information — the fix
+  // closed the tracked bug and exposed the next one (different_bug), or the
+  // fix didn't close it at all (fix_did_not_resolve). Any other state has
+  // nothing new to iterate on.
+  const last = (d.events||[]).slice().reverse().find(e => e.stage==="verify");
+  if (!last) return "";
+  const msg = (last.message||"").toLowerCase();
+  const canIterate = msg.includes("not the tracked bug") ||
+                     msg.includes("different_bug") ||
+                     msg.includes("does not close the bug") ||
+                     msg.includes("fix_did_not_resolve");
+  if (!canIterate) return "";
+  return `<button class="mini" onclick="iterateOnce('${d.id}')"
+           title="Refresh pristine token from the latest reproducer output, drop stale patch, re-run patch stage against the new bug"
+           >⟳ iterate once more</button>`;
+}
+
+function arvoCommentaryBadge(d) {
+  // Visible signal when this finding has an ARVO comparison artifact
+  // already generated. The comparison lives in the bundle as
+  // arvo-comparison.md; this badge tells the operator it is there.
+  // Only shows at review stage (matches the visibility of the rest of
+  // the review-stage actions).
+  if (d.stage !== "review") return "";
+  const has = (d.artifacts || []).some(a => a.kind === "arvo_comparison");
+  if (!has) return "";
+  return `<span class="pill s-arvo" title="This finding has ARVO commentary. Prose comparison to the ARVO developer patch, included in the evidence bundle as arvo-comparison.md.">📝 ARVO commentary</span>`;
+}
+
+function arvoCompareButton(d) {
+  // Post-review ARVO commentary. Visible only when the finding is at
+  // stage=review AND no arvo_comparison artifact exists yet AND the
+  // finding was ingested from ARVO (source=='arvo' or source_ref like
+  // 'ARVO-*'). Non-ARVO findings (KEV/OSV advisories) have no
+  // developer-patch archive to compare against, so the button was
+  // clickable-but-broken there — now correctly hidden. Once the
+  // comparison runs, the button hides on next poll — the bundle picks
+  // up the artifact and ships it as arvo-comparison.md. This is
+  // COMMENTARY, not a verdict; the reproducer already decided this
+  // finding.
+  if (d.stage !== "review") return "";
+  const isArvo = d.source === "arvo" ||
+                  (typeof d.source_ref === "string" &&
+                   d.source_ref.startsWith("ARVO"));
+  if (!isArvo) return "";
+  const already = (d.artifacts || []).some(a => a.kind === "arvo_comparison");
+  if (already) return "";
+  return `<button class="mini" onclick="arvoCompare('${d.id}')"
+           title="Post-review commentary comparing our chain-proved patch to the ARVO developer patch. Prose only, no verdict; the reproducer already decided this finding."
+           >📝 Generate ARVO comparison</button>`;
+}
+
+async function arvoCompare(id) {
+  const r = await api("/api/finding/"+encodeURIComponent(id)+"/arvo-compare",
+                      {method:"POST"});
+  if (!r || !r.ok) {
+    const reason = (r && r.error) ? r.error : "unknown";
+    // Surface an incomplete ARVO archive as its own story so Jay knows it
+    // was the ARCHIVE that came up short, not that a comparison ran and
+    // found nothing.
+    if (r && r.arvo_archive_incomplete) {
+      alert("ARVO archive is incomplete for this finding.\n\n" + reason);
+    } else {
+      alert("ARVO comparison failed: " + reason);
+    }
+    return;
+  }
+  alert("ARVO comparison generated (" + r.bytes + " B). It will be included in the next bundle download.");
+  schedule(300);
+}
+
+async function iterateOnce(id) {
+  const r = await api("/api/finding/"+encodeURIComponent(id)+"/iterate",
+                      {method:"POST"});
+  if (!r || !r.ok) {
+    alert("iterate failed: " + (r && r.error ? r.error : "unknown"));
+    return;
+  }
+  // Kick the patch stage now that the finding is ready.
+  await api("/api/finding/"+encodeURIComponent(id)+"/run", {method:"POST"});
+  schedule(300);
+}
+
+function promptsHtml(prompts) {
+  if (!prompts || !prompts.length) return "";
+  // Every model call for this finding. Reader can see EXACTLY what went to
+  // which model — the fix for "was that a bad model or a bad prompt".
+  const items = prompts.map((p, i) => {
+    const summary = `${p.stage}/${p.seat||"?"} · ${p.model||"?"}` +
+      ` · ${(p.user_message_bytes/1024).toFixed(1)} KB` +
+      ` · view=${p.view||"?"}` +
+      (p.primary_file ? ` · file=${esc(p.primary_file)}` : "") +
+      (p.context_files && p.context_files.length
+        ? ` +${p.context_files.length} ctx` : "");
+    const params = [
+      `<b>endpoint:</b> ${esc(p.endpoint||"?")}`,
+      `<b>model:</b> ${esc(p.model||"?")}`,
+      `<b>temperature:</b> ${p.temperature != null ? p.temperature : "?"}`,
+      `<b>max_tokens:</b> ${p.max_tokens != null ? (p.max_tokens>0?p.max_tokens:"(server default)") : "?"}`,
+      `<b>user bytes:</b> ${p.user_message_bytes}`,
+      `<b>user lines:</b> ${p.user_message_lines||"?"}`,
+      `<b>localization:</b> ${esc(p.localization_source||"?")}`,
+      p.context_files && p.context_files.length
+        ? `<b>context files:</b> ${p.context_files.map(esc).join(", ")}` : "",
+    ].filter(Boolean).join(" &nbsp; ");
+    return `<details id="prompt_${i}" style="margin:6px 0"><summary style="cursor:pointer">
+        <b>Prompt ${i+1}</b> &nbsp;&nbsp; ${summary}
+      </summary>
+      <div class="kv" style="margin-top:6px">${params}</div>
+      <h3 style="margin-top:12px">System message</h3>
+      <pre style="max-height:200px;overflow:auto">${esc(p.system_message||"")}</pre>
+      <h3>User message (verbatim, ${p.user_message_bytes} bytes)</h3>
+      <pre style="max-height:400px;overflow:auto">${esc(p.user_message||"")}</pre>
+    </details>`;
+  }).join("");
+  return `<h2>Model prompts (${prompts.length})</h2>${items}`;
+}
+
+function diffHtml(t){
+  return t.split("\n").map(l=>{
+    let c = l.startsWith("+")?"a":l.startsWith("-")?"d":l.startsWith("@@")?"h":l.startsWith("+++")||l.startsWith("---")?"c":"";
+    return `<span class="${c}">${esc(l)}</span>`;
+  }).join("\n");
+}
+
+function esc(s){ return (s==null?"":String(s)).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c])); }
+
+async function runAll(){ await api("/api/run",{method:"POST"}); schedule(300); }
+async function runOne(id){ await api(`/api/finding/${id}/run`,{method:"POST"}); schedule(300); }
+
+function draftSpecEditorSection(d){
+  // Rule: stage=localize AND source is NOT ARVO. Matches server-side
+  // App._draft_spec_editable exactly; if the two drift a POST would 400
+  // but the editor would still render.
+  const ref = (d.source_ref||"").toUpperCase();
+  if (d.stage !== "localize" || ref.startsWith("ARVO")) return "";
+  return `
+    <h2>HTTP reproducer evidence
+      <span style="font-size:12px;font-weight:400;color:var(--dim)">
+        — operator-authored draft, consumed by provision + reproduce
+      </span>
+    </h2>
+    <div class="kv" style="margin-top:0;color:var(--dim)">
+      When provision brings up a target for this finding, the classifier
+      looks for these patterns in the reproducer's HTTP response to decide
+      CONFIRMED_RED / CONFIRMED_GREEN / DIFFERENT_BUG. Never LLM-derived
+      &mdash; authorship is yours, so the classifier's oracle is not the
+      thing being trusted to build itself.
+    </div>
+    <div style="background:var(--panel,#161b22);border:1px solid var(--bd);border-radius:8px;padding:16px;margin:10px 0">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px 20px">
+        <div>
+          <label style="display:block;font-size:12px;color:var(--dim);margin-bottom:4px">Endpoint path (normalized, must start with /)</label>
+          <input id="ds_endpoint" class="ds-in" placeholder="/showcase/index.action">
+        </div>
+        <div>
+          <label style="display:block;font-size:12px;color:var(--dim);margin-bottom:4px">Method</label>
+          <select id="ds_method" class="ds-in">
+            <option>GET</option><option>POST</option><option>PUT</option>
+            <option>DELETE</option><option>PATCH</option>
+          </select>
+        </div>
+        <div>
+          <label style="display:block;font-size:12px;color:var(--dim);margin-bottom:4px">expected_status_red (status returned by UNPATCHED code)</label>
+          <input id="ds_status_red" class="ds-in" type="number" min="100" max="599" placeholder="200">
+        </div>
+        <div>
+          <label style="display:block;font-size:12px;color:var(--dim);margin-bottom:4px">expected_green_statuses (comma-separated, optional)</label>
+          <input id="ds_green_statuses" class="ds-in" placeholder="400, 403">
+        </div>
+        <div style="grid-column:1/-1">
+          <label style="display:block;font-size:12px;color:var(--dim);margin-bottom:4px">Preferred template (optional) &mdash; provision will start from this image instead of bare ubuntu:22.04</label>
+          <select id="ds_preferred_template" class="ds-in">
+            <option value="">&mdash; none (default ubuntu:22.04) &mdash;</option>
+          </select>
+          <div style="font-size:11px;color:var(--dim);margin-top:4px">
+            Populated from <a href="/templates" style="color:var(--accent2)">/templates</a>.
+            Provision doesn't consume this field yet &mdash; UI plumbing only for now.
+          </div>
+        </div>
+        <div style="grid-column:1/-1">
+          <label style="display:block;font-size:12px;color:var(--dim);margin-bottom:4px">evidence_rules (JSON array — each rule needs name, kind, pattern)</label>
+          <textarea id="ds_rules" class="ds-in" rows="10" style="font:12px ui-monospace,monospace;line-height:1.4" placeholder='[
+  {"name": "uid_reflection", "kind": "response_body_regex", "pattern": "uid=\\\\d+\\\\("},
+  {"name": "pwn_file_created", "kind": "side_channel_flag", "pattern": "True"}
+]'></textarea>
+          <div style="font-size:11px;color:var(--dim);margin-top:4px">
+            kinds: <code>response_body_regex</code>, <code>response_header_regex</code>,
+            <code>side_channel_flag</code>, <code>side_channel_regex</code>
+          </div>
+        </div>
+        <div style="grid-column:1/-1">
+          <label style="display:block;font-size:12px;color:var(--dim);margin-bottom:4px">body_fingerprint_negative_list (one per line, optional)</label>
+          <textarea id="ds_negfp" class="ds-in" rows="2" style="font:12px ui-monospace,monospace"></textarea>
+        </div>
+      </div>
+      <style>.ds-in{width:100%;background:#0d1117;border:1px solid var(--bd);color:var(--fg);padding:7px 9px;border-radius:5px;font-family:inherit;box-sizing:border-box}</style>
+      <div style="margin-top:12px;display:flex;align-items:center;gap:10px">
+        <button class="mini" onclick="saveDraftSpec('${d.id}')">💾 Save draft</button>
+        <span id="ds_msg" style="font-size:12px;color:var(--dim)"></span>
+      </div>
+    </div>`;
+}
+
+async function loadDraftSpec(fid){
+  const r = await api(`/api/finding/${fid}/draft-spec`);
+  if (!r || !r.ok) return;
+  const d = r.draft || {};
+  const set = (id, val) => { const el = document.getElementById(id); if (el && val !== undefined && val !== null) el.value = val; };
+  set("ds_endpoint", d.endpoint_path_norm);
+  set("ds_method", d.method);
+  set("ds_status_red", d.expected_status_red);
+  if (Array.isArray(d.expected_green_statuses))
+    set("ds_green_statuses", d.expected_green_statuses.join(", "));
+  if (Array.isArray(d.evidence_rules))
+    set("ds_rules", JSON.stringify(d.evidence_rules, null, 2));
+  if (Array.isArray(d.body_fingerprint_negative_list))
+    set("ds_negfp", d.body_fingerprint_negative_list.join("\n"));
+  // Populate template dropdown then select the saved value (if any).
+  await populatePreferredTemplateDropdown(d.preferred_template || "");
+}
+
+async function populatePreferredTemplateDropdown(selected) {
+  const sel = document.getElementById("ds_preferred_template");
+  if (!sel) return;
+  try {
+    const r = await api("/api/templates");
+    const tpls = (r && r.templates) || [];
+    // Preserve the "none" placeholder, then append templates. Group hint
+    // in the label so an operator picking one sees what class it targets.
+    sel.innerHTML =
+      `<option value="">&mdash; none (default ubuntu:22.04) &mdash;</option>` +
+      tpls.map(t => `<option value="${esc(t.name)}"
+          ${t.name === selected ? "selected" : ""}>${esc(t.name)} &mdash; ${esc(t.cve_class_hint || "")} (${esc(t.base_image)})</option>`).join("");
+  } catch (e) {
+    // Populate fallback so the dropdown isn't empty on API error.
+    sel.innerHTML =
+      `<option value="">&mdash; none (default ubuntu:22.04) &mdash;</option>`;
+  }
+}
+
+async function saveDraftSpec(fid){
+  const msg = document.getElementById("ds_msg");
+  msg.textContent = "saving..."; msg.style.color = "var(--dim)";
+  const g = id => (document.getElementById(id)?.value ?? "").trim();
+  const payload = {
+    endpoint_path_norm: g("ds_endpoint"),
+    method: g("ds_method"),
+    expected_status_red: parseInt(g("ds_status_red"), 10),
+  };
+  const gs = g("ds_green_statuses");
+  if (gs) payload.expected_green_statuses = gs.split(",").map(x => parseInt(x.trim(), 10)).filter(x => !isNaN(x));
+  const pt = g("ds_preferred_template");
+  if (pt) payload.preferred_template = pt;
+  const neg = g("ds_negfp");
+  if (neg) payload.body_fingerprint_negative_list = neg.split("\n").map(x => x.trim()).filter(Boolean);
+  try {
+    payload.evidence_rules = JSON.parse(g("ds_rules") || "[]");
+  } catch (e) {
+    msg.textContent = "evidence_rules must be valid JSON: " + e.message;
+    msg.style.color = "var(--bad)"; return;
+  }
+  try {
+    const r = await api(`/api/finding/${fid}/draft-spec`, {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify(payload),
+    });
+    if (r && r.ok) {
+      msg.textContent = "saved (validated http block)"; msg.style.color = "var(--good,#1a7f37)";
+    } else {
+      msg.textContent = "rejected: " + ((r && r.error) || "unknown");
+      msg.style.color = "var(--bad)";
+    }
+  } catch (e) {
+    msg.textContent = "request failed: " + e; msg.style.color = "var(--bad)";
+  }
+  setTimeout(() => { if (msg) msg.textContent = ""; }, 8000);
+}
+
+async function signoff(id){
+  const r = await api(`/api/finding/${id}/signoff`, {method:"POST"});
+  if (!r || !r.ok) {
+    alert("Sign-off failed: " + ((r && r.error) || "unknown"));
+    return;
+  }
+  schedule(300);
+}
+
+// Portable evidence bundle: hit the endpoint, download the streamed .tar.gz.
+// Uses `<a download>` rather than fetch+blob so the browser handles the
+// filename from the Content-Disposition header without extra JS work.
+async function downloadBundle(id){
+  const url = `/api/finding/${id}/bundle`;
+  // Fetch to surface any assembly error inline; on 200, follow through as a
+  // real download by re-fetching via a hidden anchor.
+  const resp = await fetch(url, {credentials: "include"});
+  if (!resp.ok) {
+    let msg = "bundle assembly failed";
+    try { const j = await resp.json(); msg = j.error || msg; } catch (_) {}
+    alert(msg);
+    return;
+  }
+  const blob = await resp.blob();
+  const cd = resp.headers.get("Content-Disposition") || "";
+  const m = cd.match(/filename="([^"]+)"/);
+  const filename = m ? m[1] : `patchwing-${id}.tar.gz`;
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+}
+
+// ---- tabs ----
+let tab = "pipe";
+function showTab(t){
+  tab = t;
+  document.getElementById("view-feed").style.display = t==="feed"?"block":"none";
+  document.getElementById("view-pipe").style.display = t==="pipe"?"grid":"none";
+  document.getElementById("tab-feed").classList.toggle("active", t==="feed");
+  document.getElementById("tab-pipe").classList.toggle("active", t==="pipe");
+  document.getElementById("runbtn").style.display = t==="pipe"?"":"none";
+  if (t==="feed") loadFeed();
+}
+if (location.hash === "#feed") showTab("feed");
+
+// ---- feed ----
+let feedCat = "";
+function toggleChip(el){
+  el.classList.toggle("on");
+  // Chips that share a data-f key would overwrite each other in
+  // URLSearchParams.set(), so treat same-key chips as a radio group:
+  // turning one on turns any siblings off.
+  if (el.classList.contains("on") && el.dataset.f) {
+    document.querySelectorAll(`.filters .chip.on[data-f="${el.dataset.f}"]`).forEach(c => {
+      if (c !== el) c.classList.remove("on");
+    });
+  }
+  loadFeed();
+}
+function setCat(el,c){
+  feedCat = c;
+  document.querySelectorAll(".chip.cat").forEach(x=>x.classList.remove("on"));
+  el.classList.add("on");
+  loadFeed();
+}
+
+function epssClass(e){ return e>=0.5?"epss-hi":e>=0.1?"epss-mid":"epss-lo"; }
+
+// The core question the feed answers per row: can PatchWing generate a fix?
+function fixability(a){
+  if (a.category === 'supply-chain')
+    return {label:'☣ supply-chain', cls:'fx-mal', row:'mal',
+            tip:'Malicious publish / account compromise — no code bug to patch. The fix was a clean republish.'};
+  if (a.actionable)
+    return {label:'✅ fixable', cls:'fx-yes', row:'',
+            tip:'OSS with source and a known fix — PatchWing can attempt a patch.'};
+  // Only assert a verdict once OSV has actually been consulted.
+  if (!a.osv_checked)
+    return {label:'○ unchecked', cls:'fx-no', row:'',
+            tip:'Source availability not verified yet — OSV enrichment has not run for this CVE. Pull feeds to check.'};
+  if (a.category === 'oss')
+    return {label:'◒ no fix yet', cls:'fx-maybe', row:'',
+            tip:'Open source, but no code fix located (version bump only, or unresolved). Not yet patchable.'};
+  return {label:'⛔ no source', cls:'fx-no', row:'nosrc',
+          tip:'Checked OSV — no open-source record. Proprietary / closed-source ('+(a.category||'?')+').'};
+}
+
+// Paginated feed with infinite scroll. loadFeed() resets to page 0 (called
+// by chip toggles, search input, tab switch). loadMoreFeed() is called by
+// the scroll listener when the user gets within 300px of the bottom.
+const FEED_PAGE_SIZE = 50;
+let feedOffset = 0, feedHasMore = true, feedLoading = false;
+
+function _feedParams(){
+  const p = new URLSearchParams();
+  document.querySelectorAll(".filters .chip.on[data-f]").forEach(c=>p.set(c.dataset.f, c.dataset.v || "1"));
+  if (feedCat) p.set("category", feedCat);
+  const q = document.getElementById("search").value.trim();
+  if (q) p.set("search", q);
+  p.set("order","year");
+  p.set("limit", FEED_PAGE_SIZE);
+  return p;
+}
+
+function _rowHtml(a){
+  const e = a.epss||0;
+  const fx = fixability(a);
+  const fixv = a.fixed_version ? ` <span class="fixv">→ ${esc(a.fixed_version.slice(0,14))}</span>` : "";
+  const btn = a.promoted_finding
+    ? `<button class="mini promote" disabled>promoted ✓</button>`
+    : (a.feed_class === 'production'
+        ? `<button class="mini promote" onclick="promote('${a.cve}',event)">promote →</button>`
+        : ``);
+  return `<div class="arow ${fx.row}">
+    <span class="cve">${esc(a.cve)}</span>
+    <span class="epss ${epssClass(e)}">${(e*100).toFixed(0)}%</span>
+    <span><span class="fx ${fx.cls}" title="${fx.tip}">${fx.label}</span></span>
+    <span><span class="cattag ${a.category==='oss'?'oss':''}">${esc(a.category||'?')}</span></span>
+    <span class="title">${a.ransomware?'<span class="fire">💀 </span>':''}${esc(a.title||a.product)}${fixv}</span>
+    ${btn}
+  </div>`;
+}
+
+const FEED_HDR = `<div class="feedhdr"><span>cve</span><span>epss</span><span>can patch?</span><span>plat</span><span>title</span><span></span></div>`;
+
+async function loadFeed(){
+  feedOffset = 0; feedHasMore = true;
+  document.getElementById("feedlist").innerHTML = FEED_HDR;
+  await _loadFeedPage();
+}
+
+async function loadMoreFeed(){
+  if (!feedHasMore) return;
+  await _loadFeedPage();
+}
+
+async function _loadFeedPage(){
+  if (feedLoading) return;
+  feedLoading = true;
+  try {
+    const params = _feedParams();
+    params.set("offset", feedOffset);
+    const d = await api("/api/advisories?"+params.toString());
+    const fc = d.facets;
+    const ago = fc.last_ingest ? Math.round((Date.now()/1000 - fc.last_ingest)/60)+"m ago" : "never";
+    document.getElementById("feedmeta").textContent =
+      `${fc.total} advisories · ${fc.exploited} exploited · ${fc.actionable} actionable · pulled ${ago}`;
+    const list = document.getElementById("feedlist");
+    if (feedOffset === 0 && !d.advisories.length){
+      list.innerHTML = FEED_HDR + `<div class="empty">No advisories match.<br>Try "Pull feeds".</div>`;
+      feedHasMore = false;
+      return;
+    }
+    const rows = d.advisories.map(_rowHtml).join("");
+    list.insertAdjacentHTML("beforeend", rows);
+    feedOffset += d.advisories.length;
+    if (d.advisories.length < FEED_PAGE_SIZE) feedHasMore = false;
+  } finally {
+    feedLoading = false;
+  }
+}
+
+// wire scroll listener once
+(function(){
+  const el = document.getElementById("feedlist");
+  if (!el || el.dataset.scrollWired) return;
+  el.dataset.scrollWired = "1";
+  el.addEventListener("scroll", () => {
+    if (el.scrollHeight - el.scrollTop - el.clientHeight < 300) loadMoreFeed();
+  });
+})();
+
+async function promote(cve, ev){
+  ev.stopPropagation();
+  const r = await api(`/api/advisory/${cve}/promote`,{method:"POST"});
+  if (r.finding){ showTab('pipe'); sel=r.finding; lastEvent=0; refresh(); }
+  else { loadFeed(); }
+}
+
+async function pullFeed(){
+  const btn = document.getElementById("pullbtn");
+  btn.textContent = "pulling…"; btn.disabled = true;
+  await api("/api/feeds/pull",{method:"POST"});
+  const poll = setInterval(async ()=>{
+    const d = await api("/api/advisories?exploited=1");
+    if (!d.ingest_active){ clearInterval(poll); btn.textContent="⟳ Pull feeds"; btn.disabled=false; loadFeed(); }
+    else loadFeed();
+  }, 3000);
+}
+
+refresh();
+</script>
+</body>
+</html>

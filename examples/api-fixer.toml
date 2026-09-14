@@ -1,0 +1,54 @@
+# PatchWing config — external LLM API for the fixer/verifier.
+#
+# This is the shape for running on the VM (or anywhere) against a hosted,
+# OpenAI-compatible provider, so no local GPU or host-Ollama networking is
+# needed. Example uses Together AI; any /v1 provider works (Kimi/Moonshot,
+# Z.ai, DeepSeek, OpenRouter, a self-hosted vLLM…).
+#
+# KEYS LIVE IN THE ENVIRONMENT — never inline them here (this file is in git).
+#   export PATCHWING_PATCH_KEY=sk-...
+#   export PATCHWING_VERIFY_KEY=sk-...      # may be the same provider key
+#
+# Confirm the exact model IDs your provider exposes; the strings below are
+# placeholders for the intended roles.
+
+[models.detect]
+# Optional local detector; leave pointing at a local server or drop this
+# section if you only run the fix half.
+endpoint = "http://localhost:8000/v1"
+model = "UCSB-SURFI/VulnLLM-R-7B"
+temperature = 0.1
+max_tokens = 4096
+
+[models.patch]
+# The fixer — a strong code model. GLM-5.2 is the intended choice.
+endpoint = "https://api.together.xyz/v1"
+model = "zai-org/GLM-5.2"              # <-- confirm exact Together model id
+api_key_env = "PATCHWING_PATCH_KEY"
+temperature = 0.2
+max_tokens = 8192
+timeout_s = 600
+
+[models.verify]
+# Adversarial second opinion — MUST be a different model family than patch.
+endpoint = "https://api.together.xyz/v1"
+model = "deepseek-ai/DeepSeek-V4-Pro"  # <-- confirm exact model id (or Kimi K2.6)
+api_key_env = "PATCHWING_VERIFY_KEY"
+temperature = 0.0
+max_tokens = 4096
+timeout_s = 600
+
+[sandbox]
+# Detonation happens in a podman container on the VM — the staging cell.
+backend = "podman"
+image = "docker.io/library/python:3.12-slim"
+network = "none"
+cpus = 2.0
+memory = "2g"
+timeout_s = 900
+
+[pipeline]
+db = "patchwing.db"
+workdir = ".patchwing"
+max_attempts = 3
+reproducer_scope = "definition_a"

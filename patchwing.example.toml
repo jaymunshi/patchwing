@@ -1,0 +1,96 @@
+# PatchWing configuration — copy to patchwing.toml and edit.
+#
+#   cp patchwing.example.toml patchwing.toml
+#   export PATCHWING_PATCH_KEY=...          # only if your endpoint needs auth
+#   python -m patchwing.cli config          # verify what it resolved
+#
+# There is NO DEFAULT PROVIDER. You must choose your endpoints. Everything below
+# is an example, not a recommendation — a security tool that names a provider is
+# endorsing it, and where your source code and crash artifacts go is your call.
+#
+# KEYS LIVE IN THE ENVIRONMENT. Use `api_key_env` to name a variable. Inline
+# `api_key` is tolerated only for local endpoints that ignore auth; for anything
+# remote it will warn, because this file ends up in version control.
+
+
+# ---------------------------------------------------------------------------
+# Models — one per role. Any OpenAI-compatible /v1 endpoint works:
+# vLLM, llama.cpp server, Ollama, Together, Moonshot/Kimi, Z.ai, DeepSeek.
+# ---------------------------------------------------------------------------
+
+# DETECT — reads code and decides whether there is a real vulnerability.
+# A small specialised model beats a large general one here, and it runs local.
+[models.detect]
+endpoint = "http://localhost:8000/v1"
+model = "UCSB-SURFI/VulnLLM-R-7B"
+# api_key_env = "PATCHWING_DETECT_KEY"     # local vLLM usually needs no key
+temperature = 0.1
+max_tokens = 4096
+timeout_s = 300
+
+# PATCH — the fixer. Reads the candidate, the surrounding code and the taint
+# path, decides whether it is real, and writes the patch plus a regression test.
+# This is where the intelligence lives, and the only stage that really wants a
+# large model. Self-host it if your code cannot leave the perimeter.
+[models.patch]
+endpoint = "https://api.example-provider.com/v1"
+model = "your-large-code-model"
+api_key_env = "PATCHWING_PATCH_KEY"
+temperature = 0.2
+max_tokens = 8192
+timeout_s = 600
+
+# VERIFY — the adversarial second opinion.
+#
+# Use a DIFFERENT MODEL FAMILY than [models.patch]. Same-family models share
+# blind spots, so a verifier from the same lineage mostly agrees with the fixer
+# and the check buys you very little. PatchWing warns if it detects this.
+[models.verify]
+endpoint = "https://api.example-provider.com/v1"
+model = "a-different-family-model"
+api_key_env = "PATCHWING_VERIFY_KEY"
+temperature = 0.0
+max_tokens = 4096
+timeout_s = 600
+
+
+# ---------------------------------------------------------------------------
+# Sandbox — where untrusted code actually runs.
+# ---------------------------------------------------------------------------
+[sandbox]
+# podman | docker | none.  'none' runs on the host: only ever do that inside a
+# disposable VM you are willing to destroy.
+backend = "podman"
+
+# Blank means PatchWing uses the target repo's own Dockerfile/.devcontainer,
+# which is usually what you want — the project knows how to build itself.
+image = ""
+
+# 'none' is the default and strongly preferred. Code under analysis has no
+# business reaching the network, and a crashing parser certainly does not.
+network = "none"
+
+cpus = 2.0
+memory = "4g"
+timeout_s = 1800
+
+
+# ---------------------------------------------------------------------------
+# Pipeline
+# ---------------------------------------------------------------------------
+[pipeline]
+db = "patchwing.db"
+workdir = ".patchwing"
+
+# Retries per stage before a finding is parked as failed.
+max_attempts = 3
+
+# Patches larger than this are rejected. A security fix that rewrites half the
+# file is not reviewable in a few minutes, which defeats the purpose.
+max_patch_bytes = 65536
+
+# Definition A: a reproducer is a trigger input plus an observable boundary
+# violation. It stops at "the bad outcome happened" and never demonstrates what
+# an attacker does next. This is not configurable; the key exists so the
+# boundary is visible rather than implicit.
+reproducer_scope = "definition_a"

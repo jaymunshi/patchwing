@@ -1,0 +1,130 @@
+FF.
+======================================================================
+FAIL: test_every_post_execution_path_attaches_evidence (test_evidence_coverage.EvidenceCoverageTest.test_every_post_execution_path_attaches_evidence)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "C:\Users\jaymu\claude-workspace\patchwing-merged\tests\test_evidence_coverage.py", line 52, in test_every_post_execution_path_attaches_evidence
+    self.assertEqual(
+AssertionError: Lists differ: [] != [Path(lineno=742, func='reproduce', kind='[951 chars]rue)]
+
+Second list contains 7 additional elements.
+First extra element 0:
+Path(lineno=742, func='reproduce', kind='fail', outcome='reproduce_prebuild_failed', dynamic=False, has_artifacts=False, post_execution=True)
+
+- []
++ [Path(lineno=742,
++       func='reproduce',
++       kind='fail',
++       outcome='reproduce_prebuild_failed',
++       dynamic=False,
++       has_artifacts=False,
++       post_execution=True),
++  Path(lineno=760,
++       func='reproduce',
++       kind='retry',
++       outcome='reproduce_timeout',
++       dynamic=False,
++       has_artifacts=False,
++       post_execution=True),
++  Path(lineno=763,
++       func='reproduce',
++       kind='reject',
++       outcome='reproduce_did_not_reproduce',
++       dynamic=False,
++       has_artifacts=False,
++       post_execution=True),
++  Path(lineno=785,
++       func='reproduce',
++       kind='fail',
++       outcome='reproduce_wall_not_established',
++       dynamic=False,
++       has_artifacts=False,
++       post_execution=True),
++  Path(lineno=788,
++       func='reproduce',
++       kind='fail',
++       outcome='reproduce_wall_has_no_reproducer',
++       dynamic=False,
++       has_artifacts=False,
++       post_execution=True),
++  Path(lineno=1135,
++       func='verify',
++       kind='retry',
++       outcome='build_timeout_kill',
++       dynamic=False,
++       has_artifacts=False,
++       post_execution=True),
++  Path(lineno=1144,
++       func='verify',
++       kind='reject',
++       outcome='build_compile_failure',
++       dynamic=False,
++       has_artifacts=False,
++       post_execution=True)] : 7 path(s) pronounce a verdict on executed code but attach no evidence — the justification is discarded at the moment it is asserted:
+  stages.py:742 in reproduce() -> StageResult.fail  [reproduce_prebuild_failed]
+  stages.py:760 in reproduce() -> StageResult.retry  [reproduce_timeout]
+  stages.py:763 in reproduce() -> StageResult.reject  [reproduce_did_not_reproduce]
+  stages.py:785 in reproduce() -> StageResult.fail  [reproduce_wall_not_established]
+  stages.py:788 in reproduce() -> StageResult.fail  [reproduce_wall_has_no_reproducer]
+  stages.py:1135 in verify() -> StageResult.retry  [build_timeout_kill]
+  stages.py:1144 in verify() -> StageResult.reject  [build_compile_failure]
+
+======================================================================
+FAIL: test_rejections_and_failures_after_execution_are_covered (test_evidence_coverage.EvidenceCoverageTest.test_rejections_and_failures_after_execution_are_covered)
+Stated separately from the general rule because it is the claim that
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "C:\Users\jaymu\claude-workspace\patchwing-merged\tests\test_evidence_coverage.py", line 67, in test_rejections_and_failures_after_execution_are_covered
+    self.assertEqual(
+AssertionError: Lists differ: [] != [Path(lineno=742, func='reproduce', kind='[680 chars]rue)]
+
+Second list contains 5 additional elements.
+First extra element 0:
+Path(lineno=742, func='reproduce', kind='fail', outcome='reproduce_prebuild_failed', dynamic=False, has_artifacts=False, post_execution=True)
+
+- []
++ [Path(lineno=742,
++       func='reproduce',
++       kind='fail',
++       outcome='reproduce_prebuild_failed',
++       dynamic=False,
++       has_artifacts=False,
++       post_execution=True),
++  Path(lineno=763,
++       func='reproduce',
++       kind='reject',
++       outcome='reproduce_did_not_reproduce',
++       dynamic=False,
++       has_artifacts=False,
++       post_execution=True),
++  Path(lineno=785,
++       func='reproduce',
++       kind='fail',
++       outcome='reproduce_wall_not_established',
++       dynamic=False,
++       has_artifacts=False,
++       post_execution=True),
++  Path(lineno=788,
++       func='reproduce',
++       kind='fail',
++       outcome='reproduce_wall_has_no_reproducer',
++       dynamic=False,
++       has_artifacts=False,
++       post_execution=True),
++  Path(lineno=1144,
++       func='verify',
++       kind='reject',
++       outcome='build_compile_failure',
++       dynamic=False,
++       has_artifacts=False,
++       post_execution=True)] : adverse verdict(s) with no evidence attached:
+  stages.py:742 in reproduce() -> StageResult.fail  [reproduce_prebuild_failed]
+  stages.py:763 in reproduce() -> StageResult.reject  [reproduce_did_not_reproduce]
+  stages.py:785 in reproduce() -> StageResult.fail  [reproduce_wall_not_established]
+  stages.py:788 in reproduce() -> StageResult.fail  [reproduce_wall_has_no_reproducer]
+  stages.py:1144 in verify() -> StageResult.reject  [build_compile_failure]
+
+----------------------------------------------------------------------
+Ran 3 tests in 0.061s
+
+FAILED (failures=2)

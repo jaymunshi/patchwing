@@ -1,0 +1,75 @@
+# ARVO 1076 — CDATA leak bug. WHOLE-FILE FIX-WRITER RUN.
+#
+# What this run tests:
+#   (a) fix_writer_view = "whole_file" — the model sees the entire vulnerable
+#       source instead of a ±70-line window. On this bug, a window around the
+#       crash trace anchors misses the actual fix site.
+#   (b) GLM-5.2 as fix-writer (Together, distinct family from Kimi).
+#   (c) The four-state classifier and rollback leg on an MSan target.
+#
+# Honest note the classifier will surface: pristine 1076 is NOT fully
+# deterministic — some runs produce the full MSan report (confirmed_red), some
+# SIGSEGV before MSan can print (harness_fault). That is the classifier working
+# correctly, not a bug; a SIGSEGV with no marker is not a demonstration of the
+# tracked use-of-uninitialized-value.
+#
+# THE DEVELOPER'S UPSTREAM PATCH IS NEVER SUPPLIED. Only the file and the trace.
+
+[target]
+name = "arvo-1076-cdata-leak"
+mode = "in-image"
+image = "docker.io/n132/arvo:1076-vul"
+root = "/src/libxml2"
+artifact = "/out/libxml2_xml_read_memory_fuzzer"
+prebuilt = true
+language = "c"
+path = "."
+
+# WHOLE FILE. No ±70-line window. The window is the mechanism that hid the fix
+# site on this bug the last time it was attempted; removing it removes that
+# failure mode. Costs tokens; that is the trade being taken deliberately.
+fix_writer_view = "whole_file"
+
+[finding]
+source = "arvo"
+source_ref = "ARVO-1076"
+cwe = "CWE-908"
+title = "Use-of-uninitialized-value in libxml2 xmlNextChar reached via xmlParseXMLDecl (OSS-Fuzz 1076)"
+description = """
+MemorySanitizer reports a use-of-uninitialized-value inside xmlNextChar while
+parsing a small XML input:
+
+  SUMMARY: MemorySanitizer: use-of-uninitialized-value
+           /src/libxml2/parserInternals.c:526:13 in xmlNextChar
+  DEDUP_TOKEN: malloc--xmlBufCreate--xmlSwitchInputEncodingInt
+
+The uninitialized bytes originate from a heap allocation made during
+input-encoding switching (xmlSwitchInputEncodingInt / xmlBufCreate) and are
+consumed later while the parser is reading through the buffer.
+
+Give the whole file to the fix-writer. The reproducer output is the ground truth
+about what fires; the file is the ground truth about what the code looks like.
+No developer patch is provided; the container decides pass/fail.
+"""
+files = ["SAX2.c"]                       # <-- ORACLE: file only, region NOT split
+
+[commands]
+build     = "arvo compile"
+reproduce = "arvo run"
+test      = "arvo run"
+# Pod-per-finding incremental path (change 2). Runs after the first
+# `arvo compile` has generated Makefile / config.status / .o files inside
+# the finding's pod. `make` alone recompiles only the changed .c file, then
+# we relink the fuzzer binary against the fresh libxml2.a. No configure runs,
+# so MSan's ~30% autoconf-conftest flakiness cannot hit during iteration.
+incremental_build = """make -j$(nproc) && clang++ -O1 -fno-omit-frame-pointer -gline-tables-only -DFUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION -fsanitize=memory -fsanitize-memory-track-origins -fsanitize-coverage=trace-pc-guard,trace-cmp -stdlib=libc++ -std=c++11 -Iinclude/ /src/libxml2_xml_read_memory_fuzzer.cc -o /out/libxml2_xml_read_memory_fuzzer -lFuzzingEngine .libs/libxml2.a"""
+
+# sha256 5c8b4544f00c5b5c5638ccd79b1bdfcbde37d54f65c6ce547be8d60bd4169db3 (262 bytes)
+[reproducer]
+files = ["/tmp/poc"]
+
+# EXPLICITLY EMPTY. This is a fuzz harness; there is no separate regression
+# suite. Absent would sweep the whole libxml2 tree into the frozen set and make
+# SAX2.c immutable.
+[suite]
+files = []

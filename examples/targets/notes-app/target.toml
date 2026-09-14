@@ -1,0 +1,36 @@
+# Target spec — tells PatchWing how to build, reproduce and test this project.
+#
+# Load it with:
+#   python -m patchwing.cli add --spec examples/targets/notes-app/target.toml
+
+[target]
+name = "notes-app"
+path = "."                      # relative to this file
+language = "python"
+
+[finding]
+source = "manual"
+source_ref = "PW-DEMO-001"
+cwe = "CWE-22"
+title = "Path traversal in NoteStore.read_note"
+description = """
+NoteStore.read_note joins a caller-supplied note name onto base_dir without any
+containment check, so a name containing `..` segments resolves outside the store
+directory and its contents are returned to the caller.
+"""
+
+# Files the localizer should start from. Omit this and the localize stage
+# falls back to scanning.
+files = ["notes/store.py"]
+
+[commands]
+# Optional. Nothing to compile for a pure-Python target.
+build = ""
+
+# Must exit NON-ZERO while the vulnerability is present, and ZERO once it is
+# fixed. PatchWing rejects a finding whose reproducer passes before patching —
+# that means the bug isn't there.
+reproduce = "python reproducer.py"
+
+# The project's own suite. Must stay green across the patch.
+test = "python -m unittest discover -s tests -v"

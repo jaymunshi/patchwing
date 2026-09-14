@@ -1,0 +1,290 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1"><title>PatchWing - Templates</title>
+<style>
+:root{--bg:#0d1117;--card:#161b22;--bd:#30363d;--fg:#e6edf3;--mut:#8b949e;--acc:#2f81f7;--ok:#3fb950;--warn:#d29922;--err:#f85149}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--fg);font:14px/1.5 system-ui,Segoe UI,Roboto,sans-serif}
+header{padding:16px 22px;border-bottom:1px solid var(--bd);display:flex;align-items:center;gap:14px}
+header h1{font-size:16px;margin:0}
+.tabs{display:flex;gap:4px;margin-left:6px}
+.tab{background:transparent;border:1px solid transparent;color:var(--mut);padding:5px 14px;border-radius:6px;text-decoration:none;font-size:13px}
+.tab.active{background:var(--card);color:var(--fg);border-color:var(--bd)}
+.wrap{max-width:1180px;margin:0 auto;padding:22px}
+.muted{color:var(--mut)}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:16px;margin-bottom:14px}
+.card h2{margin:0 0 4px;font-size:15px}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--bd);vertical-align:top}
+th{color:var(--mut);font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.5px}
+tbody tr:hover{background:rgba(47,129,247,.06)}
+.mono{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px}
+.pill{display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;border:1px solid var(--bd);color:var(--mut)}
+.pill.ok{color:var(--ok);border-color:var(--ok)}
+.pill.fail{color:var(--err);border-color:var(--err)}
+.pill.recipe{color:var(--acc);border-color:var(--acc)}
+.pill.imported{color:var(--warn);border-color:var(--warn)}
+button{background:var(--acc);border:0;border-radius:6px;color:#fff;padding:6px 12px;font:12px inherit;cursor:pointer}
+button:hover{background:#4a94f6}button:disabled{opacity:.5;cursor:not-allowed}
+.detail-hdr{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px}
+pre{background:#0d1117;border:1px solid var(--bd);border-radius:6px;padding:10px;font-size:12px;overflow-x:auto;white-space:pre-wrap;word-break:break-word}
+.recipe-step{background:#0d1117;border:1px solid var(--bd);border-radius:6px;padding:10px;margin:6px 0;font:12px ui-monospace,monospace}
+.recipe-step .tname{color:var(--acc);font-weight:600}
+.back{color:var(--acc);text-decoration:none;font-size:13px}
+.back:hover{text-decoration:underline}
+.msg{font-size:12px;margin-left:12px}
+</style></head><body>
+<header><h1>&#129714; PatchWing</h1>
+<span class="tabs">
+  <a class="tab" href="/">Home</a>
+  <a class="tab" href="/app#pipe">Pipeline</a>
+  <a class="tab" href="/app#feed">Feed</a>
+  <a class="tab active" href="/templates">Templates</a>
+  <a class="tab" href="/providers">Providers</a>
+</span>
+<span class="muted" id="whoami" style="margin-left:auto;font-size:12px"></span>
+<a class="tab" href="#" onclick="return signOut()" title="End session">Sign out</a></header>
+
+<script>
+async function signOut() {
+  try { await fetch("/api/logout", {method:"POST"}); } catch (_) {}
+  location.href = "/login";
+  return false;
+}
+fetch("/api/whoami").then(r => r.ok ? r.json() : {}).then(j => {
+  const el = document.getElementById("whoami");
+  if (el && j.user) el.textContent = "signed in as " + j.user.email;
+}).catch(() => {});
+</script>
+
+<div class="wrap" id="wrap"></div>
+
+<script>
+// --- helpers ---------------------------------------------------------
+const esc = s => String(s ?? "").replace(/[&<>"']/g,
+  c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const fmtSize = b => !b ? "—" : (b >= 1e9 ? (b/1e9).toFixed(2)+" GB"
+  : b >= 1e6 ? (b/1e6).toFixed(0)+" MB" : (b/1e3).toFixed(0)+" KB");
+const fmtTs = t => !t ? "—" : new Date(t*1000).toLocaleString();
+const relTime = t => {
+  if (!t) return "—";
+  const s = Math.floor((Date.now()/1000 - t));
+  if (s < 60) return s+"s ago";
+  if (s < 3600) return Math.floor(s/60)+"m ago";
+  if (s < 86400) return Math.floor(s/3600)+"h ago";
+  return Math.floor(s/86400)+"d ago";
+};
+const verifyPill = t => {
+  if (t.last_verified_ok === 1)
+    return `<span class="pill ok" title="Verified ${fmtTs(t.last_verified_at)}">verified ${relTime(t.last_verified_at)}</span>`;
+  if (t.last_verified_ok === 0)
+    return `<span class="pill fail" title="Failed ${fmtTs(t.last_verified_at)}">failed ${relTime(t.last_verified_at)}</span>`;
+  return `<span class="pill">unverified</span>`;
+};
+const provPill = t => {
+  // recipe_turn_count > 0 with an ubuntu-shaped base = machine-derived
+  // recipe_turn_count == 0 = verify-only imported
+  if (t.recipe_turn_count > 0)
+    return `<span class="pill recipe" title="Machine-derived from ${t.base_image} via ${t.recipe_turn_count} tool call(s)">recipe · ${t.recipe_turn_count}</span>`;
+  return `<span class="pill imported" title="Verify-only over ${t.base_image}">imported</span>`;
+};
+
+async function api(path, opts) {
+  const r = await fetch(path, opts);
+  return r.json();
+}
+
+// --- routing ---------------------------------------------------------
+function render() {
+  const id = new URLSearchParams(location.search).get("id");
+  if (id) renderDetail(id);
+  else renderIndex();
+}
+window.addEventListener("popstate", render);
+
+// --- index view ------------------------------------------------------
+async function renderIndex() {
+  const wrap = document.getElementById("wrap");
+  wrap.innerHTML = `<div class="card"><h2>Pod template library</h2>
+    <div class="muted">Cached provision outputs. Each template is a
+      committed container image (digest-pinned) plus the ordered recipe
+      of provision-tool calls that built it. Fresh pods spawn from these
+      in ~1s.</div></div>
+    <div class="card"><div id="tbl">loading…</div></div>`;
+  const r = await api("/api/templates");
+  const rows = r.templates || [];
+  if (!rows.length) {
+    document.getElementById("tbl").innerHTML =
+      `<div class="muted">No templates yet. Build one with
+        <span class="mono">scripts/build_one_template.py &lt;name&gt;</span>.</div>`;
+    return;
+  }
+  document.getElementById("tbl").innerHTML = `
+    <table>
+      <thead><tr>
+        <th>Name</th>
+        <th>CVE class</th>
+        <th>Base image</th>
+        <th>Provenance</th>
+        <th>Size</th>
+        <th>Digest</th>
+        <th>Created</th>
+        <th>Verified</th>
+        <th></th>
+      </tr></thead>
+      <tbody>${rows.map(t => `
+        <tr>
+          <td>
+            <a class="mono" style="color:var(--acc);text-decoration:none"
+               href="?id=${encodeURIComponent(t.id)}"
+               onclick="event.preventDefault(); history.pushState(null,'','?id=${encodeURIComponent(t.id)}'); render();">
+              ${esc(t.name)}
+            </a>
+            <div class="muted" style="font-size:11px;margin-top:2px">
+              ${esc(t.description)}
+            </div>
+          </td>
+          <td class="mono">${esc(t.cve_class_hint || "—")}</td>
+          <td class="mono">${esc(t.base_image)}</td>
+          <td>${provPill(t)}</td>
+          <td class="mono" style="text-align:right">${fmtSize(t.image_size_bytes)}</td>
+          <td class="mono" title="${esc(t.image_digest || "")}">
+            ${t.image_digest ? esc(t.image_digest.slice(0,19)) : "—"}
+          </td>
+          <td class="mono">${relTime(t.created_at)}</td>
+          <td>${verifyPill(t)}</td>
+          <td><button onclick="verifyNow('${t.id}', this)">Verify now</button></td>
+        </tr>`).join("")}</tbody>
+    </table>`;
+}
+
+async function verifyNow(id, btn) {
+  const orig = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = "verifying…";
+  try {
+    const r = await api("/api/templates/" + encodeURIComponent(id) + "/verify",
+                        {method: "POST"});
+    if (!r.ok) {
+      btn.textContent = "error";
+      alert("Verify failed: " + (r.error || "unknown"));
+    } else if (r.verified_ok) {
+      btn.textContent = "✓ verified";
+      setTimeout(render, 800);
+    } else {
+      btn.textContent = "✗ failed";
+      alert("Verification did not match:\n\n" + (r.error || "") +
+            "\n\n---stdout tail---\n" + (r.stdout_tail || ""));
+    }
+  } catch (e) {
+    btn.textContent = "error";
+    alert("Request failed: " + e);
+  } finally {
+    setTimeout(() => { btn.disabled = false; btn.textContent = orig; },
+               2500);
+  }
+}
+
+// --- detail view -----------------------------------------------------
+async function renderDetail(id) {
+  const wrap = document.getElementById("wrap");
+  wrap.innerHTML = `<div class="card"><a class="back"
+    href="?" onclick="event.preventDefault(); history.pushState(null,'','?'); render();">
+    ← back to library</a>
+    <div id="detail" style="margin-top:12px">loading…</div></div>`;
+  const r = await api("/api/templates/" + encodeURIComponent(id));
+  if (!r.ok) {
+    document.getElementById("detail").innerHTML =
+      `<div style="color:var(--err)">${esc(r.error || "not found")}</div>`;
+    return;
+  }
+  const t = r.template;
+  const recipe = r.template.recipe || [];
+  const el = document.getElementById("detail");
+  el.innerHTML = `
+    <div class="detail-hdr">
+      <div>
+        <h2 style="margin:0">${esc(t.name)} ${provPill(t)} ${verifyPill(t)}</h2>
+        <div class="muted" style="margin-top:4px">${esc(t.description)}</div>
+      </div>
+      <button onclick="verifyDetail('${t.id}', this)">Verify now</button>
+    </div>
+    <table style="margin-top:14px;max-width:900px">
+      <tbody>
+        <tr><th style="width:180px">image_tag</th>
+            <td class="mono">${esc(t.image_tag)}</td></tr>
+        <tr><th>base_image</th>
+            <td class="mono">${esc(t.base_image)}</td></tr>
+        <tr><th>image_digest</th>
+            <td class="mono" style="word-break:break-all">
+              ${esc(t.image_digest || "—")}
+            </td></tr>
+        <tr><th>image_size_bytes</th>
+            <td class="mono">${(t.image_size_bytes||0).toLocaleString()}
+              (${fmtSize(t.image_size_bytes)})</td></tr>
+        <tr><th>cve_class_hint</th>
+            <td class="mono">${esc(t.cve_class_hint || "—")}</td></tr>
+        <tr><th>builder_version</th>
+            <td class="mono">${esc(t.builder_version)}</td></tr>
+        <tr><th>created_at</th>
+            <td class="mono">${fmtTs(t.created_at)}</td></tr>
+        <tr><th>last_verified_at</th>
+            <td class="mono">${fmtTs(t.last_verified_at)}
+              ${t.last_verified_ok === 1 ? '<span class="pill ok">OK</span>'
+                : t.last_verified_ok === 0 ? '<span class="pill fail">FAIL</span>'
+                : ''}
+            </td></tr>
+        <tr><th>verification_cmd</th>
+            <td><pre>${esc(t.verification_cmd)}</pre></td></tr>
+        <tr><th>verification_expect</th>
+            <td class="mono">${esc(t.verification_expect)}</td></tr>
+        ${t.last_verified_note ? `
+        <tr><th>last_verified_note</th>
+            <td><pre>${esc(t.last_verified_note)}</pre></td></tr>` : ""}
+      </tbody>
+    </table>
+    <div style="margin-top:22px">
+      <h2 style="margin:0 0 8px">Recipe · ${recipe.length} tool call(s)</h2>
+      <div class="muted" style="margin-bottom:10px">
+        Ordered list of provision-tool calls captured while this template
+        was built. A reader can replay this from a clean ubuntu:22.04 pod
+        to rebuild the same stack ${
+          t.recipe_turn_count === 0
+          ? '(this is a verify-only imported template — no build steps)'
+          : ''
+        }.
+      </div>
+      ${recipe.length === 0
+        ? `<div class="muted">— (empty recipe — verify-only)</div>`
+        : recipe.map((step, i) => `
+          <div class="recipe-step">
+            <span class="mono" style="color:var(--mut)">#${(i+1).toString().padStart(2,'0')}</span>
+            <span class="tname">${esc(step.tool)}</span>
+            (<span class="mono">${esc(JSON.stringify(step.args))}</span>)
+          </div>`).join("")}
+    </div>`;
+}
+
+async function verifyDetail(id, btn) {
+  const orig = btn.textContent;
+  btn.disabled = true; btn.textContent = "verifying…";
+  try {
+    const r = await api("/api/templates/" + encodeURIComponent(id) + "/verify",
+                        {method: "POST"});
+    if (r.ok && r.verified_ok) {
+      btn.textContent = "✓ verified";
+      setTimeout(() => renderDetail(id), 800);
+    } else {
+      btn.textContent = "✗ failed";
+      alert("Verification did not match:\n\n" + (r.error || "") +
+            "\n\n---stdout tail---\n" + (r.stdout_tail || ""));
+    }
+  } catch (e) {
+    btn.textContent = "error";
+    alert("Request failed: " + e);
+  } finally {
+    setTimeout(() => { btn.disabled = false; btn.textContent = orig; }, 2500);
+  }
+}
+
+render();
+</script>
+</body></html>
